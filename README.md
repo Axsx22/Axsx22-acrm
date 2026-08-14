@@ -12,6 +12,40 @@ ACRM یک چارچوب پژوهشی برای مشاهده‌پذیری رفتا�
 
 ---
 
+## 🧭 ACRM Research Navigation
+
+> **Start here if you are exploring the ACRM repository.**
+>
+> This navigation map points to the implementation artifacts currently present in the repository. It is a repository navigation aid, not a claim of completed implementation or experimental validation.
+
+### 🔎 Where should I start?
+
+| What you want to inspect | Go to |
+|---|---|
+| **Current ACRM v8.5 development status** | [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md) |
+| **Field state runtime contract** | [`acrm_core/field/state.py`](acrm_core/field/state.py) |
+| **FieldState unit tests** | [`tests/unit/test_field_state.py`](tests/unit/test_field_state.py) |
+
+### 🧭 Current v8.5 Development Path
+
+```text
+ACRM v8.5
+│
+├── 📋 Development Status
+│   └── docs/
+│       └── ACRM_v8_5_DEVELOPMENT_STATUS.md
+│
+├── 🧩 Core Runtime Contract
+│   └── acrm_core/
+│       └── field/
+│           └── state.py
+│
+└── 🧪 Tests
+    └── tests/
+        └── unit/
+            └── test_field_state.py
+```
+
 ## Key features / امکانات
 
 - Runtime observability: collect metrics, traces, and example interactions to understand LLM behavior.
