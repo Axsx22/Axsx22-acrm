@@ -46,6 +46,10 @@ ACRM v8.5
             └── test_field_state.py
 ```
 
+## 🧩 Current ACRM v8.5 scope
+
+The current repository represents an incremental research implementation. The implemented v8.5 path is centered on the runtime FieldState contract and its contract tests. Future evaluation, failure-mode analysis, temporal/directional analysis, governance evaluation, and experimental verification are not claimed as implemented unless explicitly documented in the repository.
+
 ## Key features / امکانات
 
 - Runtime observability: collect metrics, traces, and example interactions to understand LLM behavior.
