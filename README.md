@@ -12,6 +12,46 @@ ACRM یک چارچوب پژوهشی برای مشاهده‌پذیری رفتا�
 
 ---
 
+## Researcher & Research Path
+
+ACRM is an independent research project developed by Ali Farahani.
+
+The research began with long-term observation of how AI systems behave through sustained, open-ended interaction. Rather than starting from a fixed theory, the work developed through repeated observation, questioning, hypothesis formation, and comparison across different AI systems.
+
+Over time, these observations expanded into questions concerning artificial intelligence, cognition, consciousness, interaction, and adaptive system architecture. The research then moved from conceptual exploration toward explicit architectural models and software implementations.
+
+ACRM is one of the results of that transition: an attempt to turn observations and hypotheses about adaptive AI behavior into explicit, testable architectural structures.
+
+The research is independent, but it is not intended to be informal. The project follows a research-oriented process in which observations, hypotheses, architectural assumptions, implementations, tests, limitations, and future empirical evaluation are kept conceptually distinct.
+
+The current implementation should therefore be read as evidence of what has been implemented and tested, not as validation of the broader hypotheses from which the research originated.
+
+### Research Path
+Observation
+↓
+Questions
+↓
+Hypotheses
+↓
+Conceptual Models
+↓
+Architecture
+↓
+Implementation
+↓
+Testable Contracts
+↓
+Validation
+↓
+Empirical Evaluation
+
+ACRM represents the engineering and experimental side of this research path. Its purpose is not only to build a system, but to make the underlying assumptions explicit enough to be examined, implemented, tested, and eventually evaluated.
+↓
+Empirical Evaluation
+
+ACRM represents the engineering and experimental side of this research path. Its purpose is not only to build a system, but to make the underlying assumptions explicit enough to be examined, implemented, tested, and eventually evaluated.
+
+
 ## 🧭 ACRM Research Navigation
 
 > **Start here if you are exploring the ACRM repository.**
@@ -45,6 +85,10 @@ ACRM v8.5
         └── unit/
             └── test_field_state.py
 ```
+
+## 🧩 Current ACRM v8.5 scope
+
+The current repository represents an incremental research implementation. The implemented v8.5 path is centered on the runtime FieldState contract and its contract tests. Future evaluation, failure-mode analysis, temporal/directional analysis, governance evaluation, and experimental verification are not claimed as implemented unless explicitly documented in the repository.
 
 ## 🧩 Current ACRM v8.5 scope
 
