@@ -12,6 +12,18 @@ ACRM یک چارچوب پژوهشی برای مشاهده‌پذیری رفتا�
 
 ---
 
+## Research Context
+
+ACRM is an independent research and engineering project developed by Ali Farahani. The work began through long-term observation of AI-system behavior and gradually moved from conceptual exploration toward explicit architectural structures, software implementation, executable tests, and documented research artifacts.
+
+The repository records this transition from research observation to an inspectable and testable software artifact.
+
+### Research Path
+
+Observation → Questions → Hypotheses → Conceptual Models → Architecture → Implementation → Testable Contracts → Validation → Empirical Evaluation
+
+Implementation and passing software tests provide evidence about the implemented artifacts and their software contracts. They are not, by themselves, empirical confirmation of broader research hypotheses.
+
 ## Researcher & Research Path
 
 ACRM is an independent research project developed by Ali Farahani.
@@ -52,7 +64,7 @@ ACRM represents the engineering and experimental side of this research path. Its
 
 > **Start here if you are exploring the ACRM repository.**
 >
-> This navigation map points to the implementation artifacts currently present in the repository. It is a repository navigation aid, not a claim of completed implementation or experimental validation.
+> This navigation map points directly to the implemented and documented artifacts currently available in the repository.
 
 ### 🔎 Where should I start?
 
