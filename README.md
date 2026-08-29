@@ -1,496 +1,286 @@
-Axsx22-acrm
 
-Adaptive Cognitive Regulation Module (ACRM)
 
-ACRM is an independent research and engineering project focused on making observable aspects of adaptive AI-system behavior explicit, inspectable, testable, and reproducible.
+````markdown
+# Axsx22-acrm
 
-The repository currently contains a concrete Python implementation of the ACRM v8.5 observation layer, centered on the immutable "FieldState" primitive, together with its software contract, executable unit tests, development documentation, package configuration, and traceable Git history.
+## Adaptive Cognitive Regulation Module (ACRM)
 
-What is ACRM?
+ACRM is an independent, research-oriented software project exploring structured approaches to observing and modeling adaptive behavior in AI systems.
 
-ACRM emerged from a long-term research process concerned with how adaptive AI systems behave during sustained interaction.
+The project is developed incrementally, with an emphasis on separating recorded observations from higher-level analysis, inference, governance, and intervention.
 
-The work developed progressively from observation and questioning toward hypotheses, conceptual models, architectural structures, software implementation, explicit contracts, and executable verification.
+> **Current status:** The present implementation establishes the `FieldState` runtime contract and its test coverage. The broader ACRM architecture remains under research and development.
 
-This repository represents the engineering side of that research process through concrete software artifacts that can be inspected, executed, tested, and traced through version history.
+---
 
-Research Path
+## Research Context
 
-The research developed through the following progression:
+ACRM originated from long-term observation and investigation of adaptive behavior in AI systems.
 
-Observation
-    ↓
-Questions
-    ↓
-Hypotheses
-    ↓
-Conceptual Models
-    ↓
-Architecture
-    ↓
-Implementation
-    ↓
-Testable Contracts
-    ↓
-Validation
-    ↓
-Empirical Evaluation
+The research developed progressively through observation, questioning, hypothesis formation, conceptual modeling, architectural design, and software implementation.
 
-Different forms of evidence are kept conceptually distinct.
+The project follows a deliberate distinction between research claims and implementation evidence:
 
-Implementation demonstrates what has been built.
+- an observation is not an interpretation;
+- an interpretation is not a hypothesis;
+- a hypothesis is not a validated model;
+- an implementation is not validation of the underlying research hypothesis;
+- passing software tests demonstrates compliance with defined software contracts, not the truth of broader scientific claims.
 
-Executable tests demonstrate properties of the implemented software contracts.
+The research and engineering process can therefore be represented as:
 
-Neither implementation nor software tests are presented by themselves as empirical confirmation of broader research hypotheses.
+**Observation → Questions → Hypotheses → Conceptual Models → Architecture → Testable Contracts → Implementation → Testing → Validation → Empirical Evaluation**
 
-Current Implementation
+The repository represents the engineering and experimental side of this process.
 
-The current concrete observation primitive of ACRM v8.5 is:
+---
 
+## Current Implementation
+
+The current development line is focused on **ACRM v8.5**.
+
+The primary implemented component is:
+
+```text
 FieldState
+````
 
-"FieldState" represents an immutable snapshot of observable ACRM field state.
+`FieldState` provides an immutable, validated representation of a recorded system state.
 
-Observation
-    ↓
+The current implementation establishes contracts for:
+
+* immutable state snapshots;
+* `field_id` validation;
+* `session_id` validation;
+* non-negative sequence values;
+* timezone-aware timestamps;
+* explicit timestamps suitable for deterministic testing and replay;
+* finite numeric metrics;
+* immutable metric storage;
+* failure-mode identifier validation;
+* duplicate failure-mode detection;
+* governance-confidence validation in the range `[0.0, 1.0]`;
+* deterministic metric and failure-mode access.
+
+The current `FieldState` implementation is covered by unit tests.
+
+The current v8.5 development status and implementation boundaries are documented in:
+
+`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`
+
+---
+
+## Architectural Boundary
+
+The current architecture deliberately establishes `FieldState` as a boundary around recorded state.
+
+Conceptually:
+
+```text
+Observed and recorded state
+            │
+            ▼
+       FieldState
+            │
+            ▼
+   Higher-level processing
+```
+
+`FieldState` is responsible for representing and validating a recorded state.
+
+It does not, by itself, determine:
+
+* why a state exists;
+* what caused a state;
+* what a state means;
+* how multiple states are related;
+* whether a particular transition occurred;
+* what behavioral pattern should be inferred;
+* what decision should be made;
+* or what intervention should be performed.
+
+These responsibilities are outside the current implementation.
+
+This separation is intentional.
+
+---
+
+## Future Research Direction
+
+Future development may investigate additional architectural layers concerned with relationships between observations, changes across states, analysis, governance, and intervention.
+
+A possible research direction is:
+
+```text
 FieldState
-    ↓
-Immutable Snapshot
-
-The FieldState implementation provides a stable representation of an observation that can be inspected, validated, tested, and used as a foundation for higher-level analysis.
-
-The observation layer records observable state. It does not modify model execution, model output, sampling behavior, or model policy.
-
-FieldState Data Model
-
-A "FieldState" contains:
-
-- "field_id"
-- "session_id"
-- "sequence"
-- "timestamp"
-- "metrics"
-- "state"
-- "active_failure_modes"
-- "governance_confidence"
-
-Field Identity
-
-"field_id" identifies the observed field.
-
-"session_id" identifies the session associated with the observation.
-
-Both are validated as non-empty strings.
-
-Sequence
-
-"sequence" represents the sequence position supplied to the observation.
-
-The contract requires a non-negative integer.
-
-Boolean values are explicitly rejected even though Python treats "bool" as a subclass of "int".
-
-Timestamp
-
-FieldState uses timezone-aware timestamps.
-
-When an explicit timestamp is not supplied, the implementation provides a UTC timestamp.
-
-Explicit timestamps are supported for deterministic observations and reproducible testing.
-
-Metrics
-
-Metrics are represented as named numeric values.
-
-The implementation validates metric names and values and rejects:
-
-- boolean values
-- "NaN"
-- positive infinity
-- negative infinity
-- other non-finite values
-
-Metric storage is protected from later mutation.
-
-State
-
-The "state" field is represented as a non-empty string.
-
-The FieldState observation layer does not impose a canonical scientific state vocabulary.
-
-Active Failure Modes
-
-Failure modes are represented as identifiers.
-
-The contract validates the identifiers and rejects duplicate values.
-
-The resulting collection is immutable.
-
-Governance Confidence
-
-"governance_confidence" is represented as a finite numeric value constrained to:
-
-0.0 ≤ governance_confidence ≤ 1.0
-
-Boolean and non-finite values are rejected.
-
-Immutability
-
-Immutability is a fundamental property of the FieldState implementation.
-
-The FieldState object is frozen, while internal collections are also protected from mutation.
-
-The implementation protects the observation through two mechanisms:
-
-FieldState mutation
-        ↓
-     rejected
-
-Source-container mutation
-        ↓
-does not alter existing snapshot
-
-Once an observation has been recorded, later changes to source containers cannot silently modify the recorded snapshot.
-
-This supports reproducible inspection, testing, replay, and later analysis of observations.
-
-Validation
-
-The FieldState contract provides structural validation for observable state.
-
-The implemented validation covers:
-
-- field identity
-- session identity
-- sequence type
-- sequence range
-- boolean sequence rejection
-- timezone-aware timestamp requirements
-- metric names
-- metric numeric types
-- boolean metric rejection
-- finite metric values
-- failure-mode identifiers
-- duplicate failure-mode rejection
-- state validation
-- governance-confidence type
-- governance-confidence range
-- finite governance-confidence values
-
-These validation rules define software-level invariants of the observation object.
-
-They do not, by themselves, establish scientific validity for the concepts represented by stored values.
-
-Metric Representation
-
-FieldState stores metrics as named values.
-
-For example:
-
-S   = 0.91
-rho = 0.22
-ARQ = 0.74
-
-The observation layer can store and validate such values without embedding their complete theoretical interpretation into the snapshot structure.
-
-The FieldState contract therefore separates metric representation from questions concerning:
-
-- the construct represented by a metric
-- its scientific definition
-- its unit
-- its calculation procedure
-- its directionality
-- comparability across systems
-- measurement error
-- theoretical validity
-
-Failure Modes and State
-
-FieldState records state and active failure-mode identifiers as part of an observation.
-
-The observation layer keeps the following concepts distinct:
-
-Observed State
-      ≠
-Failure Interpretation
-      ≠
-Governance Decision
-      ≠
-Intervention
-
-This separation allows an observation to be recorded without embedding a complete interpretation or intervention policy into the observation primitive.
-
-Deterministic Observations
-
-FieldState supports explicitly supplied timestamps.
-
-This allows deterministic observation objects to be created for testing and controlled analysis.
-
-For example:
-
-from datetime import datetime, timezone
-
-timestamp = datetime(
-    2026,
-    8,
-    14,
-    12,
-    0,
-    tzinfo=timezone.utc,
-)
-
-An explicit timestamp can then be supplied when constructing a FieldState.
-
-This provides deterministic test inputs while keeping temporal-stream behavior separate from the individual observation object.
-
-FieldState API
-
-The current implementation provides construction and observation access through the FieldState API.
-
-A representative usage pattern is:
-
-from acrm_core.field.state import FieldState
-
-state = FieldState.create(
-    field_id="field-001",
-    session_id="session-001",
-    sequence=0,
-    metrics={
-        "S": 0.91,
-        "rho": 0.22,
-        "ARQ": 0.74,
-    },
-    state="HEALTHY",
-    governance_confidence=0.95,
-)
-
-print(state.metric("S"))
-print(state.has_failure_mode("FM-01"))
-
-This example demonstrates the implemented observation interface.
-
-The example values do not by themselves define the scientific semantics of "S", "rho", or "ARQ".
-
-Test Suite
-
-The repository contains a dedicated FieldState unit-test suite:
-
-"tests/unit/test_field_state.py"
-
-The current verified suite contains:
-
-33 passing tests
-
-The tests exercise the implemented FieldState contract, including:
-
-- FieldState creation
-- explicit timestamps
-- UTC timestamps
-- deterministic timestamps
-- metric access
-- failure-mode detection
-- sequence validation
-- boolean sequence rejection
-- confidence validation
-- confidence boundary conditions
-- non-finite confidence rejection
-- field identity validation
-- session identity validation
-- timezone-aware timestamp requirements
-- state validation
-- metric validation
-- boolean metric rejection
-- non-finite metric rejection
-- metric-name validation
-- failure-mode validation
-- duplicate failure-mode rejection
-- object immutability
-- metric immutability
-- source-dictionary mutation protection
-- immutable failure-mode representation
-
-Run the test suite with:
-
-python -m pytest -q
-
-Current verified result:
-
-33 passed
-
-Documentation
-
-The implementation is accompanied by two dedicated documents.
-
-FieldState Contract
-
-"docs/FIELD_STATE_CONTRACT.md"
-
-The FieldState contract defines the responsibility boundary of the observation layer and documents the behavior that the implementation is required to preserve.
-
-It establishes the distinction between observation storage and higher-level concerns such as temporal relationships, transition rules, metric semantics, failure-mode taxonomy, governance decisions, and intervention.
-
-ACRM v8.5 Development Status
-
-"docs/ACRM_v8_5_DEVELOPMENT_STATUS.md"
-
-This document records the development state of ACRM v8.5 and provides a traceable description of the implementation stage represented by the repository.
-
-Together, the implementation, tests, and documentation form a connected software artifact:
-
-Contract
-    ↓
-Implementation
-    ↓
-Tests
-    ↓
-Development Record
-
-Package Configuration
-
-The project uses "pyproject.toml" for Python package configuration.
-
-Create a development environment with:
-
-python -m venv .venv
-source .venv/bin/activate
-
-Install the package and test dependency with:
-
-pip install -e ".[test]"
-
-Run the tests with:
-
-python -m pytest -q
-
-Repository Structure
-
-Axsx22-acrm/
-├── acrm_core/
-│   ├── __init__.py
-│   └── field/
-│       ├── __init__.py
-│       └── state.py
-├── docs/
-│   ├── ACRM_v8_5_DEVELOPMENT_STATUS.md
-│   └── FIELD_STATE_CONTRACT.md
-├── tests/
-│   └── unit/
-│       └── test_field_state.py
-├── pyproject.toml
-├── README.md
-├── LICENSE
-└── .gitignore
-
-The repository keeps generated package metadata and local development environments outside source control.
-
-Architectural Position
-
-The current implementation occupies the observation layer of the broader ACRM architecture.
-
-Its role is to provide a stable, validated, immutable representation of observable state.
-
-                    ACRM
-                      │
-                      ▼
-             Observation Layer
-                      │
-                      ▼
-                  FieldState
-                      │
-              ┌───────┴───────┐
-              ▼               ▼
-       Documentation        Tests
-              │               │
-              └───────┬───────┘
-                      ▼
-              Verified Contract
-
-The repository therefore provides a concrete foundation for examining observations independently before higher-level relationships and processes are introduced.
-
-From Observation to Process
-
-A single FieldState represents a point of observable state.
-
-A sequence of observations provides material for examining relationships between states:
-
-State A
-   ↓
-State B
-   ↓
-State C
-
-The conceptual progression beyond the observation layer is:
-
-Observation
     ↓
 Relation
     ↓
 Transition
     ↓
-Pattern
+Analysis
     ↓
-Model
+Governance
     ↓
-Prediction / Regulation
+Intervention
+```
 
-These higher-level concepts are architectural directions rather than claims about artifacts contained in the current FieldState implementation.
+This diagram represents a **research and architectural direction**, not a claim that these components currently exist or have been scientifically validated.
 
-Each higher-level layer can be introduced through its own explicit contract and implementation when it becomes part of the repository.
+In particular, a relationship between observations should not automatically be interpreted as causality, and an observed difference between states should not automatically be treated as an explanation of the underlying behavior.
 
-Engineering and Research Principles
+Future layers will therefore require explicit definitions, responsibilities, testable contracts, and appropriate validation before they are implemented as part of the framework.
 
-Explicit Contracts
+---
 
-Observable software behavior is defined through explicit contracts and executable tests.
+## What Is Not Currently Implemented
 
-Immutable Observations
+The current repository does not claim the following as implemented unless corresponding source code, contracts, and tests are explicitly present:
 
-Recorded observations remain protected from later mutation of their source data.
+* runtime Field/Stream processing;
+* ordering between multiple snapshots;
+* session-continuity enforcement across snapshots;
+* temporal or directional analysis;
+* state-transition policies;
+* canonical metric semantics and units;
+* a failure-mode taxonomy or registry;
+* governance evaluation;
+* model intervention;
+* continuous runtime regulation;
+* experimental verification;
+* benchmark evaluation.
 
-Deterministic Verification
+The existence of `FieldState` should not be interpreted as evidence that these higher-level capabilities have already been implemented.
 
-Explicit timestamps and executable tests support reproducible verification.
+---
 
-Separation of Responsibility
+## Repository Structure
 
-Observation, temporal analysis, interpretation, governance, and intervention are treated as distinct concerns.
+The current repository is intentionally small and focused on the implemented v8.5 scope.
 
-Evidence Before Inference
+```text
+acrm_core/
+└── field/
+    └── state.py
 
-Evidence about implemented software is kept distinct from interpretation of broader research hypotheses.
+tests/
+└── unit/
+    └── test_field_state.py
 
-Incremental Architecture
+docs/
+├── ACRM_v8_5_DEVELOPMENT_STATUS.md
+└── FIELD_STATE_CONTRACT.md
 
-Architectural concepts become implementation artifacts through explicit development rather than being treated as implemented merely because they have been proposed.
+pyproject.toml
+README.md
+LICENSE
+```
 
-Current Development State
+The structure is expected to evolve as additional architectural contracts are defined and implemented.
 
-ACRM v8.5 currently provides a concrete and tested observation layer centered on "FieldState".
+---
 
-The repository contains:
+## Installation
 
-- an installable Python package
-- an implemented immutable FieldState observation primitive
-- explicit structural validation rules
-- protected observation data
-- deterministic timestamp support
-- dedicated FieldState unit tests
-- 33 passing tests
-- a documented FieldState contract
-- ACRM v8.5 development-status documentation
-- Python package configuration
-- reproducible installation and testing instructions
-- traceable Git history
+### Requirements
 
-The repository is therefore directly inspectable, installable, executable, and testable as a concrete software artifact.
+* Python 3.10 or later
 
-Researcher
+### Install the package
 
-ACRM is developed by Ali Farahani as an independent research and engineering project.
+```text
+pip install .
+```
 
-The repository documents the transition from research observation and conceptual development toward explicit architectural and software artifacts.
+### Install test dependencies
 
-License
+```text
+pip install ".[test]"
+```
 
-See "LICENSE" for the applicable license terms.
+---
+
+## Running the Tests
+
+The repository uses `pytest` for its current test suite.
+
+Run:
+
+```text
+pytest
+```
+
+The current `FieldState` test suite contains 33 passing tests.
+
+---
+
+## Documentation
+
+The following documents and source files provide the most direct view of the current implementation:
+
+* `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md` — current v8.5 implementation status and explicit boundaries.
+* `docs/FIELD_STATE_CONTRACT.md` — `FieldState` responsibilities and non-responsibilities.
+* `acrm_core/field/state.py` — runtime `FieldState` implementation.
+* `tests/unit/test_field_state.py` — unit tests for the `FieldState` contract.
+
+---
+
+## Development Principles
+
+ACRM development follows several principles:
+
+### 1. Separate observation from inference
+
+Recorded state should not be treated as an explanation of that state.
+
+### 2. Define boundaries before implementation
+
+A new architectural layer should have a clear responsibility and contract before it becomes a runtime component.
+
+### 3. Keep research claims separate from implementation claims
+
+Software implementation and passing tests provide evidence about the software itself. They do not, by themselves, validate broader hypotheses about AI behavior.
+
+### 4. Prefer explicit contracts
+
+Important assumptions should be expressed as explicit, testable contracts rather than remaining implicit in implementation behavior.
+
+### 5. Increase complexity only when justified
+
+The project prioritizes clarifying architectural responsibilities and their evidence requirements before adding additional runtime components.
+
+---
+
+## Contributing
+
+Technical discussion, critical review, and contributions are welcome.
+
+For substantial architectural changes, please discuss the proposed change before implementation.
+
+Architectural proposals should, where applicable, identify:
+
+* the problem being addressed;
+* the responsibility of the proposed component;
+* the information it receives;
+* the information it produces;
+* its relationship to existing contracts;
+* assumptions introduced by the design;
+* and how its behavior can be tested or evaluated.
+
+---
+
+## Research Status
+
+ACRM is an independent research project developed by **Ali Farahani**.
+
+The repository should be evaluated according to the implementation, documentation, tests, and evidence explicitly available in the project.
+
+Broader research questions and hypotheses remain open to further investigation and empirical evaluation.
+
+---
+
+## License
+
+See `LICENSE` for licensing information.
+
+`
