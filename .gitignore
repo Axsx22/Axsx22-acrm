@@ -25,3 +25,6 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Packaging metadata
+*.egg-info/
