@@ -1,5 +1,3 @@
-
-
 ````markdown
 # Axsx22-acrm
 
@@ -133,24 +131,6 @@ Future layers will therefore require explicit definitions, responsibilities, tes
 
 ---
 
-## What Is Not Currently Implemented
-
-The current repository does not claim the following as implemented unless corresponding source code, contracts, and tests are explicitly present:
-
-* runtime Field/Stream processing;
-* ordering between multiple snapshots;
-* session-continuity enforcement across snapshots;
-* temporal or directional analysis;
-* state-transition policies;
-* canonical metric semantics and units;
-* a failure-mode taxonomy or registry;
-* governance evaluation;
-* model intervention;
-* continuous runtime regulation;
-* experimental verification;
-* benchmark evaluation.
-
-The existence of `FieldState` should not be interpreted as evidence that these higher-level capabilities have already been implemented.
 
 ---
 
@@ -223,8 +203,6 @@ The following documents and source files provide the most direct view of the cur
 * `acrm_core/field/state.py` — runtime `FieldState` implementation.
 * `tests/unit/test_field_state.py` — unit tests for the `FieldState` contract.
 
----
-
 ## Development Principles
 
 ACRM development follows several principles:
@@ -277,10 +255,6 @@ The repository should be evaluated according to the implementation, documentatio
 
 Broader research questions and hypotheses remain open to further investigation and empirical evaluation.
 
----
-
 ## License
 
 See `LICENSE` for licensing information.
-
-`
