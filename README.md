@@ -46,10 +46,6 @@ Validation
 Empirical Evaluation
 
 ACRM represents the engineering and experimental side of this research path. Its purpose is not only to build a system, but to make the underlying assumptions explicit enough to be examined, implemented, tested, and eventually evaluated.
-↓
-Empirical Evaluation
-
-ACRM represents the engineering and experimental side of this research path. Its purpose is not only to build a system, but to make the underlying assumptions explicit enough to be examined, implemented, tested, and eventually evaluated.
 
 
 ## 🧭 ACRM Research Navigation
