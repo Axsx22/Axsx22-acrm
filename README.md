@@ -8,17 +8,26 @@ ACRM is developed by **Ali Farahani**, Independent AI Researcher & System Archit
 
 ---
 
-## Stakeholder reporting
+## Executive stakeholder reporting
 
-The repository maintains a dated, stakeholder-facing executive update alongside the detailed engineering and research records.
+The repository maintains an **official, dated stakeholder-reporting record** for executive and steering-committee communication. It provides a concise view of delivery status while preserving a direct path back to the underlying technical and research evidence.
 
-**Current reporting period: 23–30 Aug 2026 · Overall status: 🟢 GREEN**
+**Current reporting period:** 23–30 Aug 2026  
+**Overall status:** 🟢 **GREEN**
 
-- **[Executive stakeholder update](docs/STAKEHOLDER_UPDATE_2026-08-30.md)** — shipped work, RAG risks, next 30-day focus, and decisions needed.
-- **[Executive PowerPoint deck](docs/ACRM_Executive_Update_2026-08-30.pptx)** — one-slide presentation version for stakeholder / steering-committee use.
-- **[Stakeholder reporting policy](docs/STAKEHOLDER_REPORTING.md)** — reporting scope, evidence boundary, naming convention, and synchronization policy.
+### Current executive package
 
-The executive update is a communication artifact and does not replace technical contracts, tests, development-status records, or research evidence. Stakeholder claims must remain proportional to the evidence actually present in the repository.
+| Artifact | Purpose |
+|---|---|
+| **[Executive stakeholder update](docs/STAKEHOLDER_UPDATE_2026-08-30.md)** | Source-of-record executive summary: shipped work, RAG risks, next 30-day focus, and decisions needed. |
+| **[Executive PowerPoint deck](docs/ACRM_Executive_Update_2026-08-30.pptx)** | One-slide presentation for stakeholder and steering-committee review. |
+| **[Stakeholder reporting policy](docs/STAKEHOLDER_REPORTING.md)** | Defines reporting scope, evidence boundaries, artifact pairing, naming, and synchronization. |
+
+**How to read this section:** the Markdown update provides the primary written reporting record; the PowerPoint is its executive presentation companion. Both represent the same reporting baseline and should remain synchronized.
+
+**Governance rule:** stakeholder reporting communicates project status; it does not establish technical or scientific validity. Claims must remain proportional to the evidence actually present in the repository. Technical contracts, tests, development-status records, and research artifacts remain the authoritative evidence for implementation and evaluation.
+
+> **Executive principle:** *Report what is shipped, flag what is at risk, state what comes next, and distinguish demonstrated concepts from evidence-backed capability.*
 
 ---
 
