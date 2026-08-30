@@ -1,28 +1,113 @@
-# Axsx22-acrm
+# ACRM — Adaptive Cognitive Regulation Module
 
-## Adaptive Cognitive Regulation Module (ACRM)
+**An independent research-oriented architecture for studying observable, evaluable, and governable behavior in LLM-based cognitive systems.**
 
-ACRM is an independent, research-oriented software project exploring structured approaches to observing and modeling adaptive behavior in AI systems.
+ACRM is developed by **Ali Farahani**, Independent AI Researcher & System Architect, as part of a broader research program on human–LLM collaborative cognitive systems.
 
-> **Current implementation status — v8.5:** the repository provides a small, tested `FieldState` runtime contract, Python packaging, unit tests, and automated GitHub Actions CI. The larger ACRM architecture remains a research and development program; demo dashboards and conceptual modules are not represented as implemented core capabilities unless they have an explicit contract, implementation, and tests.
+> **Important:** This repository is intentionally explicit about the boundary between implemented software, prototypes, research artifacts, and future architecture. The presence of a dashboard, experiment, or conceptual design does not by itself mean that the corresponding capability is implemented in the ACRM v8.5 core.
 
 ---
 
-## v8.5 at a glance
+## What is ACRM?
+
+ACRM (Adaptive Cognitive Regulation Module) is a research architecture concerned with how an LLM-based cognitive system can represent and study its evolving state and behavior over time.
+
+The central research question is:
+
+> **How can LLM-based cognitive systems be designed so that their behavior, state, changes, interactions, and processes remain observable, evaluable, and governable over time?**
+
+This question connects several research domains:
+
+- LLM behavior and long-term interaction
+- cognitive systems and persistent agents
+- state representation and temporal change
+- observability and evaluation
+- governance and system evolution
+- human–LLM collaborative system design
+
+The broader research program treats the system as an evolving process rather than only as an isolated sequence of model responses.
+
+---
+
+## Research context
+
+ACRM is one of the principal architectures in a larger independent research program. That program has moved through a recurring cycle:
 
 ```text
-Observed / recorded state
+Observation
+    ↓
+Question
+    ↓
+Hypothesis
+    ↓
+Concept
+    ↓
+Architecture
+    ↓
+Prototype
+    ↓
+Experiment
+    ↓
+Observation
+    ↓
+Revision
+    ↓
+New Architecture
+```
+
+The research has produced architectural designs, executable prototypes, tests, experiments, dashboards, demonstrations, and technical documentation. Observability is treated as a research capability rather than merely a UI concern.
+
+The current research direction is to move from independently developed prototypes toward a more scalable, reviewable, reproducible, and externally evaluable research program.
+
+---
+
+## Human–LLM collaborative research model
+
+A distinctive part of the research program is its human–LLM collaborative structure.
+
+```text
+Human System Architect
+        │
+        ▼
+Collaborative interaction with multiple LLMs
+        │
+        ▼
+Analysis · critique · comparison · scenario exploration
+        │
+        ▼
+Architectural decision
+        │
+        ▼
+Implementation · experimentation · observation
+        │
+        ▼
+Revision
+        └──────────────→ next research cycle
+```
+
+The human researcher remains responsible for problem framing, architectural decisions, integration, evaluation, research direction, and final system-level decisions. Language models participate as research partners for analysis, critique, idea generation, review, scenario analysis, and solution exploration.
+
+This repository documents the resulting software and selected technical artifacts; it does not claim that model-generated material constitutes independent scientific validation.
+
+---
+
+## ACRM v8.5 — current implementation
+
+The current repository deliberately keeps the v8.5 core small and contract-driven.
+
+```text
+Recorded / supplied state
           │
           ▼
-     FieldState
+      FieldState
           │
           ▼
  Future higher-level layers
 ```
 
-`FieldState` is a validated, immutable representation of a **recorded state**. It is deliberately not an inference engine, causal engine, decision system, or intervention mechanism.
+`FieldState` is a validated, immutable representation of a **recorded state**. It is not an inference engine, causal engine, decision system, or intervention mechanism.
 
-### Implemented
+### Implemented in v8.5
 
 - immutable `FieldState` snapshots;
 - non-empty `field_id` and `session_id` validation;
@@ -32,63 +117,53 @@ Observed / recorded state
 - read-only metric storage;
 - failure-mode identifier validation and duplicate rejection;
 - `governance_confidence` validation in `[0.0, 1.0]`;
-- deterministic metric/failure-mode access;
+- deterministic metric and failure-mode access;
 - UTC-normalized timestamp access;
 - contract-focused unit tests;
-- automated CI on Python 3.10–3.13.
+- Python packaging;
+- automated GitHub Actions CI on Python 3.10–3.13.
 
-See [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) and [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md).
+See:
 
----
+- [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md)
+- [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md)
 
-## Demos and dashboards
+### What v8.5 does not currently claim
 
-ACRM has accumulated several interactive HTML dashboards and screen-recorded demonstrations during development. These artifacts are important because they preserve earlier architectural experiments and show how concepts such as interaction fields, failure modes, calibration, temporal state and visualization were explored.
+The core does **not** currently claim to implement a complete behavioral inference stack, causal analysis engine, autonomous governance controller, intervention engine, or scientifically validated cognitive model.
 
-**They are intentionally separated from the v8.5 core.** A dashboard can contain sophisticated UI, simulated values, client-side algorithms, or an apparent runtime without constituting a production implementation of the corresponding subsystem.
-
-The reviewed source material includes:
-
-- **ACRM v8 — Interaction Field Architecture:** interactive SVG topology, `S / ρ / H / RS` displays, component cards, hidden-state observers, behavior-pattern display, temporal entropy chart, counterfactual scenario panel, console, and a timed client-side evaluation sequence.
-- **ACRM v7 — Behavioral Runtime Field:** a 17-item failure-mode registry, severity visualization, causal links, six client-side test definitions, state vector, temporal trajectory, console, and calibration/test runner logic.
-- **Calibration v6.2 dashboard:** calibration-oriented test visualization and result presentation.
-- **Failure Mode Taxonomy source material:** Python-side taxonomy, scoring, and orchestration concepts supplied during development.
-- **Screen recordings:** visual evidence of dashboard execution on a device.
-
-The detailed inventory and evidence boundaries are documented in [`docs/DEMO_CATALOG.md`](docs/DEMO_CATALOG.md). The archive policy is documented in [`docs/demos/README.md`](docs/demos/README.md).
-
-### Evidence rule
-
-Demo behavior is evidence that a prototype was designed or exercised. It is **not automatically evidence that the displayed values came from a production backend**, nor is it scientific validation of the underlying research hypothesis.
-
-For example, the v8 Interaction Field dashboard initializes chart data in JavaScript and changes displayed metrics through timed callbacks when its evaluation control is run. The v7 dashboard likewise contains its own client-side failure-mode registry and test runners. These are valuable prototype behaviors, but they remain classified as demo/research artifacts until their responsibilities are converted into tested v8.5 contracts.
+Potential future layers such as relation detection, transition analysis, behavioral analysis, governance, and intervention require their own explicit contracts, implementations, tests, and evaluation evidence before they become core capabilities.
 
 ---
 
-## Architectural boundary
+## Architectural boundary: observation is not interpretation
 
-The central engineering rule is the separation of **observation from interpretation**.
+A fundamental engineering principle in ACRM is the separation of recorded state from interpretation.
 
-`FieldState` records and validates supplied state. It does not determine:
+`FieldState` records and validates supplied state. It does not decide:
 
 - why a state exists;
 - what caused it;
-- what it means;
+- what the state means;
 - how observations are related;
 - whether a transition occurred;
 - which behavioral pattern should be inferred;
 - which decision should be made;
 - or which intervention should be performed.
 
+This boundary is intentional. It prevents higher-level hypotheses from silently becoming low-level data-model assumptions.
+
+Likewise:
+
 > **Correlation or temporal succession must not automatically be represented as causality.**
 
-Software tests establish compliance with software contracts. They do not, by themselves, prove a broader scientific or behavioral claim.
+Software tests establish compliance with software contracts. They do not, by themselves, establish scientific validity of the broader research hypotheses.
 
 ---
 
-## Research evidence levels
+## From prototype to evidence
 
-The project distinguishes:
+The research program distinguishes several levels of evidence:
 
 ```text
 Observation
@@ -108,9 +183,76 @@ Implementation
 Software testing
     ↓
 Empirical evaluation
+    ↓
+Independent reproduction
 ```
 
 These levels are related but not interchangeable.
+
+A prototype demonstrates that a design was implemented or exercised. A passing unit test demonstrates compliance with a software contract. Neither automatically establishes the truth of a broader behavioral or scientific hypothesis.
+
+---
+
+## Prototypes, dashboards, and research archive
+
+The ACRM research history includes interactive dashboards and executable prototypes covering ideas such as:
+
+- interaction-field visualization;
+- behavioral runtime state;
+- temporal state and trajectory observation;
+- calibration and invariant testing;
+- failure-mode taxonomies;
+- quality-control and consensus concepts;
+- observability and system-state visualization.
+
+These artifacts are valuable because they preserve architectural experiments and show how concepts evolved. They are intentionally separated from the v8.5 core until a capability has a clear contract and corresponding implementation and tests.
+
+See [`docs/DEMO_CATALOG.md`](docs/DEMO_CATALOG.md) for the reviewed artifact inventory and [`docs/demos/README.md`](docs/demos/README.md) for the archive policy.
+
+### Evidence rule
+
+A dashboard may contain sophisticated UI, simulated values, browser-side algorithms, or an apparent runtime. That is evidence of a prototype—not automatically evidence of a production backend, scientific validation, or a current v8.5 implementation.
+
+This distinction is a deliberate part of the repository's transparency policy.
+
+---
+
+## Research and technical layers
+
+The broader program can be understood as several connected but distinct layers:
+
+```text
+Theoretical Layer
+  research questions · concepts · hypotheses
+          ↓
+Architectural Layer
+  ACRM · PCS · related architectures
+          ↓
+Execution Layer
+  prototypes · executable systems
+          ↓
+Experimental Layer
+  tests · scenarios · experiments
+          ↓
+Observability Layer
+  dashboards · state observation · visualization
+          ↓
+Documentation Layer
+  contracts · architecture · research records
+          ↓
+Historical Layer
+  version history · design evolution · research archive
+```
+
+ACRM v8.5 currently occupies the **implementation/contract foundation** of this larger research structure rather than representing the entire program.
+
+---
+
+## Relationship to PCS and related architectures
+
+ACRM and PCS are two major architectures within the broader research program. Other concepts have emerged around memory, state, observability, evaluation, control, interaction, persistence, governance, and system evolution.
+
+Some of these may eventually become independent subsystems or separate research projects. They are not automatically part of the ACRM v8.5 runtime simply because they appear in historical designs or demonstrations.
 
 ---
 
@@ -143,7 +285,7 @@ README.md
 LICENSE
 ```
 
-The repository may grow as new responsibilities acquire explicit contracts, implementation boundaries, tests, and appropriate evidence.
+As the project evolves, new components should be introduced through the same discipline: define the responsibility, establish a contract, implement it, test it, document assumptions and failure modes, and identify the evidence level.
 
 ---
 
@@ -163,7 +305,7 @@ python -m pytest -q
 
 The current v8.5 suite contains **15 contract-focused tests** for `FieldState`.
 
-CI runs the same project contract across Python 3.10, 3.11, 3.12 and 3.13 on pushes to `main`/`develop` and pull requests targeting those branches.
+CI runs the project contract across Python 3.10, 3.11, 3.12, and 3.13 on pushes to `main`/`develop` and pull requests targeting those branches.
 
 ---
 
@@ -193,15 +335,30 @@ The complete contract is defined in `docs/FIELD_STATE_CONTRACT.md`.
 
 ## CI and engineering policy
 
-`.github/workflows/ci.yml` checks out the repository, provisions supported Python versions, installs the package and test dependencies, and runs `pytest`.
+`.github/workflows/ci.yml` provisions supported Python versions, installs the package and test dependencies, and runs the test suite.
 
 CI is a regression guard for the implemented software contract. A green CI run must not be presented as scientific validation of ACRM's broader research direction.
 
 ---
 
+## Development principles
+
+1. **Observation before conclusion.**
+2. **Experimentation before generalization.**
+3. **Contracts precede complexity.**
+4. **Architectures should be implementable.**
+5. **Systems should be observable.**
+6. **Implementation evidence is not scientific validation.**
+7. **Keep recording, relation detection, transition analysis, governance, and intervention separated until their contracts justify integration.**
+8. **Preserve research history and prototype provenance.**
+9. **Prefer explicit, deterministic, reviewable behavior.**
+10. **Make claims proportional to available evidence.**
+
+---
+
 ## Future architecture
 
-A possible future architecture is:
+A possible future direction is:
 
 ```text
 FieldState
@@ -217,29 +374,69 @@ Governance
 Intervention
 ```
 
-This is a **research/architectural direction**, not a claim that these components currently exist. Each future layer should define its responsibility, inputs/outputs, assumptions, failure modes, tests, and evaluation strategy before being promoted into the runtime.
+This is a **research and architectural direction**, not a claim that these components currently exist in the v8.5 runtime.
+
+Each future layer should define its responsibility, inputs and outputs, assumptions, failure modes, tests, and evaluation strategy before being promoted into the core.
 
 ---
 
-## Development principles
+## Current research stage
 
-1. **Observation is not inference.**
-2. **Contracts precede complexity.**
-3. **Implementation evidence is not scientific validation.**
-4. **Prefer explicit and deterministic behavior.**
-5. **Reject invalid state early.**
-6. **Keep recording, relation detection, transition analysis, governance and intervention separated until their contracts justify integration.**
-7. **Preserve prototypes as evidence without confusing them with production capabilities.**
+The broader program has progressed beyond idea-only research: it includes architectural designs, working prototypes, local execution, experimentation, dashboards, demonstrations, testing, and extensive documentation.
+
+The next major transition is from independently developed prototype research toward:
+
+```text
+Architectural stabilization
+        ↓
+Scale and longer execution
+        ↓
+Longitudinal data generation
+        ↓
+Systematic analysis
+        ↓
+Independent evaluation
+        ↓
+Reproducibility
+        ↓
+Research collaboration
+        ↓
+Scientific / technical publication
+```
+
+Current known gaps include scale, compute and API capacity, longitudinal data, external collaboration, independent validation, reproducibility, publication, and infrastructure. These are documented as research constraints rather than hidden limitations.
 
 ---
 
-## Contributing
+## Researcher
 
-Technical discussion, critical review and contributions are welcome. Substantial architectural changes should identify the problem, component responsibility, inputs/outputs, assumptions, failure modes, tests, and evaluation strategy.
+**Ali Farahani** is the independent AI researcher and system architect responsible for the research direction and system-level architecture.
 
-## Research status
+The broader research program has been developed through a sustained human–LLM collaborative process. The human role includes problem framing, architectural design, integration, evaluation, research direction, experimental design, and final system-level decisions.
 
-ACRM is an independent research project developed by **Ali Farahani**. The repository should be evaluated according to the implementation, documentation, tests, demonstrations, and evidence explicitly available in the project.
+The repository should be evaluated against the artifacts and evidence actually present in the project, rather than against claims implied by historical prototypes or future plans.
+
+---
+
+## Contributing and critical review
+
+Technical discussion, critical review, reproducibility work, and contributions are welcome.
+
+Substantial architectural changes should identify, where applicable:
+
+- the problem being addressed;
+- component responsibility;
+- inputs and outputs;
+- assumptions and invariants;
+- failure modes;
+- tests;
+- evaluation strategy;
+- evidence level;
+- and whether the change belongs to core, demo, research artifact, or roadmap.
+
+Critical review is part of the intended development process. The goal is not to eliminate criticism but to make the project's assumptions, boundaries, evidence, and limitations explicit enough to be reviewed constructively.
+
+---
 
 ## License
 
