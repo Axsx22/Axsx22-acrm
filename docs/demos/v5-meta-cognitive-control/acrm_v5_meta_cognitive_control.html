@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ACRM v5.0 — Meta-Cognitive Control Architecture — Raw Interactive Demo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#060b18;color:#e0e8ff;font:14px system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:20px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.panel{background:#080f1e;border:1px solid #1a2f4a;border-radius:6px;padding:14px}.full{grid-column:1/-1}h1{font-size:18px}h2{font-size:12px;letter-spacing:1px;color:#6a9aaa}.control{display:grid;grid-template-columns:90px 1fr 60px;gap:8px;align-items:center;margin:10px 0}input[type=range]{width:100%}button{padding:8px 12px;margin:4px;background:#0a1628;color:#e0e8ff;border:1px solid #2a4a6a;border-radius:4px;cursor:pointer}button:hover{border-color:#4a9eff}.value{font-family:monospace;text-align:right}.state{padding:10px;text-align:center;border:1px solid #2a4a6a;border-radius:4px;font-weight:700}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{padding:10px;background:#0a1628;text-align:center}.metric b{display:block;font-size:20px}.log{height:180px;overflow:auto;background:#050c18;padding:8px;font:12px monospace}.chart{width:100%;height:220px;background:#060c1a;border:1px solid #1a2f4a}.note{color:#7a9ab0;font-size:12px;line-height:1.5}@media(max-width:800px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body><main>
+<h1>ACRM v5.0 — Meta-Cognitive Control Architecture</h1>
+<p class="note">Raw, self-contained browser demo. The default scenario is optional; the controls below let a user inject values manually and observe the demo decision logic. This artifact is a research/demo implementation, not the normative ACRM core.</p>
+<div class="grid">
+<section class="panel"><h2>INPUT / REALITY SIGNALS</h2>
+<div class="control"><label>S</label><input id="S" type="range" min="0" max="1" step="0.01" value="0.72"><span class="value" id="Sv">0.72</span></div>
+<div class="control"><label>ρ</label><input id="rho" type="range" min="0" max="1" step="0.01" value="0.82"><span class="value" id="rhov">0.82</span></div>
+<div class="control"><label>Δ</label><input id="delta" type="range" min="0" max="1" step="0.01" value="0.08"><span class="value" id="deltav">0.08</span></div>
+<button id="apply">PROCESS INPUT</button><button id="reset">RESET</button><button id="scenario">RUN SAMPLE SCENARIO</button>
+</section>
+<section class="panel"><h2>POLICY STATE</h2><div class="state" id="state">BOOTSTRAP</div><p>Action: <b id="action">MONITOR</b></p><p>Theory: <b id="theory">DRIFT_THEORY</b></p><div class="metrics"><div class="metric"><b id="gov">0.00</b>Governance confidence</div><div class="metric"><b id="risk">0.00</b>Raw risk</div><div class="metric"><b id="novelty">0.00</b>Novelty</div><div class="metric"><b id="turn">0</b>Turn</div></div></section>
+<section class="panel"><h2>HYPOTHESIS COMPETITION</h2><div id="hyps"></div></section>
+<section class="panel full"><h2>DRIFT / SIGNAL HISTORY</h2><canvas id="chart" class="chart"></canvas></section>
+<section class="panel full"><h2>EVENT LOG</h2><div id="log" class="log"></div></section>
+</div>
+</main>
+<script>
+const hypotheses={DRIFT:.8,THRESHOLD_ERR:.3,NOVELTY_SHIFT:.5,CONTEXT_CHANGE:.4,MODEL_DECAY:.2,SENSOR_FAIL:.1,THEORY_FAIL:.1};
+let ema=.65, theoryConf=.8, turn=0, history=[];
+const $=id=>document.getElementById(id);
+function clamp(x){return Math.max(0,Math.min(1,x))}
+function sync(){['S','rho','delta'].forEach(k=>$(k+'v').textContent=Number($(k).value).toFixed(2))}
+['S','rho','delta'].forEach(k=>$(k).addEventListener('input',sync));
+function renderHyp(){ $('hyps').innerHTML=Object.entries(hypotheses).map(([k,v])=>`<div style="margin:7px 0"><div style="display:flex;justify-content:space-between;font:12px monospace"><span>${k}</span><span>${v.toFixed(2)}</span></div><div style="height:7px;background:#0a1628"><div style="height:100%;width:${v*100}%;background:#4a9eff"></div></div></div>`).join('') }
+function log(msg){const p=$('log');p.insertAdjacentHTML('afterbegin',`<div>[T${String(turn).padStart(3,'0')}] ${msg}</div>`)}
+function draw(){const c=$('chart'),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const w=r.width,h=r.height;x.fillStyle='#060c1a';x.fillRect(0,0,w,h);x.strokeStyle='#1a2f4a';for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,h*i/4);x.lineTo(w,h*i/4);x.stroke()}if(history.length<2)return;x.strokeStyle='#4a9eff';x.lineWidth=2;x.beginPath();history.forEach((v,i)=>{const px=i*(w-8)/(history.length-1)+4,py=h-4-v*(h-8);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
+function processInput(S,rho,delta,source='manual'){
+ turn++;S=clamp(S);rho=clamp(rho);delta=clamp(delta);ema=.9*ema+.1*S;const rel=ema?(ema-S)/ema:0;
+ let state='STABLE',action='MONITOR';
+ if(turn<=2)state='BOOTSTRAP'; else if(delta>.45||S<.5||rho<.5)state='DRIFTED'; else if(delta>.12||S<.65||rho<.7)state='WARNING';
+ if(state==='WARNING')action='INVESTIGATE'; if(state==='DRIFTED')action='RE_ANCHOR';
+ const gov=clamp(S*rho*(1-delta)*theoryConf),risk=clamp((1-S)*.5+delta*.3+(1-rho)*.2),novelty=Math.abs(rel);
+ hypotheses.DRIFT=clamp(.8+((.65-S)*.8));hypotheses.THRESHOLD_ERR=clamp(.25+delta*.5);hypotheses.CONTEXT_CHANGE=clamp(.2+(1-rho)*.5);hypotheses.MODEL_DECAY=clamp(.1+(1-S)*.45);
+ if(state==='DRIFTED'){hypotheses.DRIFT=Math.max(hypotheses.DRIFT,.9);log('DRIFT hypothesis dominant — re-anchor recommended')}else if(state==='WARNING')log('Semantic deviation detected — investigate');else log(source==='manual'?'Manual input processed — stable flow':'Sample scenario step processed');
+ $('state').textContent=state;$('action').textContent=action;$('theory').textContent=theoryConf<.6?'MODEL_THEORY':'DRIFT_THEORY';$('gov').textContent=gov.toFixed(2);$('risk').textContent=risk.toFixed(2);$('novelty').textContent=novelty.toFixed(2);$('turn').textContent=turn;history.push(S);if(history.length>80)history.shift();renderHyp();draw();
+}
+$('apply').onclick=()=>processInput(Number($('S').value),Number($('rho').value),Number($('delta').value));
+$('reset').onclick=()=>{ema=.65;theoryConf=.8;turn=0;history=[];Object.assign(hypotheses,{DRIFT:.8,THRESHOLD_ERR:.3,NOVELTY_SHIFT:.5,CONTEXT_CHANGE:.4,MODEL_DECAY:.2,SENSOR_FAIL:.1,THEORY_FAIL:.1});$('log').innerHTML='';$('state').textContent='BOOTSTRAP';$('action').textContent='MONITOR';$('theory').textContent='DRIFT_THEORY';['gov','risk','novelty','turn'].forEach(id=>$(id).textContent='0');renderHyp();draw();log('Reset complete')};
+$('scenario').onclick=()=>{const seq=[ [.75,.84,.06], [.70,.78,.12], [.62,.68,.20], [.48,.52,.48], [.40,.45,.62], [.44,.50,.50], [.58,.65,.28], [.72,.78,.10] ];let i=0;const timer=setInterval(()=>{processInput(...seq[i++],'sample');if(i===seq.length)clearInterval(timer)},350)};
+sync();renderHyp();draw();log('Raw interactive demo initialized');
+window.ACRM_DEMO={processInput,reset:()=>$('reset').click()};
+</script></body></html>
