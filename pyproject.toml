@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acrm-core"
+version = "8.5.0"
+description = "ACRM v8.5 core runtime components"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+    { name = "ACRM Project" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8,<9"
+]
+
+[tool.setuptools.packages.find]
+include = ["acrm_core*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
