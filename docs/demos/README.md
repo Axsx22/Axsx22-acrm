@@ -18,8 +18,9 @@ A demo is not promoted to core merely because it contains sophisticated UI, metr
 - ACRM v7 — Behavioral Runtime Field
 - Calibration v6.2 dashboard
 - Failure Mode Taxonomy source material
+- ACRM v2.0 technical roadmap
 
-The supplied v8 and v7 HTML files were inspected directly. They contain substantial client-side visualization and simulation logic and are therefore valuable research artifacts. Their behavior is documented in `../DEMO_CATALOG.md`.
+The supplied v8 and v7 HTML files were inspected directly. They contain substantial client-side visualization and simulation logic and are therefore valuable research artifacts. Their observed behavior is documented in `../DEMO_CATALOG.md`.
 
 ## Planned layout
 
@@ -40,3 +41,7 @@ The original dashboards depend on browser-side JavaScript and, in places, extern
 ## Evidence note
 
 The screen recordings supplied during development are useful for showing that the dashboards were exercised on a device. They should be labelled with the demo name, version/date when known, and whether the observed behavior is simulated or connected to a real backend.
+
+## Transparency rule
+
+Historical prototypes and roadmap documents describe design intent and prior experiments. They do not, by themselves, establish that a capability exists in `acrm_core`. Promotion into v8.5 requires a defined contract, implementation, and tests.
