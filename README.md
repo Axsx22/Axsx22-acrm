@@ -8,6 +8,20 @@ ACRM is developed by **Ali Farahani**, Independent AI Researcher & System Archit
 
 ---
 
+## Stakeholder reporting
+
+The repository maintains a dated, stakeholder-facing executive update alongside the detailed engineering and research records.
+
+**Current reporting period: 23–30 Aug 2026 · Overall status: 🟢 GREEN**
+
+- **[Executive stakeholder update](docs/STAKEHOLDER_UPDATE_2026-08-30.md)** — shipped work, RAG risks, next 30-day focus, and decisions needed.
+- **[Executive PowerPoint deck](docs/ACRM_Executive_Update_2026-08-30.pptx)** — one-slide presentation version for stakeholder / steering-committee use.
+- **[Stakeholder reporting policy](docs/STAKEHOLDER_REPORTING.md)** — reporting scope, evidence boundary, naming convention, and synchronization policy.
+
+The executive update is a communication artifact and does not replace technical contracts, tests, development-status records, or research evidence. Stakeholder claims must remain proportional to the evidence actually present in the repository.
+
+---
+
 ## What is ACRM?
 
 ACRM (Adaptive Cognitive Regulation Module) is a research architecture concerned with how an LLM-based cognitive system can represent and study its evolving state and behavior over time.
@@ -277,6 +291,9 @@ docs/
 ├── ACRM_v8_5_DEVELOPMENT_STATUS.md
 ├── FIELD_STATE_CONTRACT.md
 ├── DEMO_CATALOG.md
+├── STAKEHOLDER_REPORTING.md
+├── STAKEHOLDER_UPDATE_2026-08-30.md
+├── ACRM_Executive_Update_2026-08-30.pptx
 └── demos/
     └── README.md
 
