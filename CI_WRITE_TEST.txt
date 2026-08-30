@@ -1,0 +1,1 @@
+Temporary write-access test. This file is intended to verify GitHub write permissions and can be deleted afterward.
