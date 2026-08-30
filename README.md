@@ -4,15 +4,11 @@
 
 ACRM is an independent, research-oriented software project exploring structured approaches to observing and modeling adaptive behavior in AI systems.
 
-The project is developed incrementally, with a deliberate separation between **recorded observations** and higher-level **analysis, inference, governance, and intervention**.
-
-> **Current status — ACRM v8.5:** the repository implements the `FieldState` runtime contract, contract-focused unit tests, Python packaging, and automated GitHub Actions CI. The broader ACRM architecture remains a research and development program; future layers are not represented as implemented capabilities unless explicitly documented and tested.
+> **Current implementation status — v8.5:** the repository provides a small, tested `FieldState` runtime contract, Python packaging, unit tests, and automated GitHub Actions CI. The larger ACRM architecture remains a research and development program; demo dashboards and conceptual modules are not represented as implemented core capabilities unless they have an explicit contract, implementation, and tests.
 
 ---
 
-## What ACRM v8.5 currently is
-
-The current implementation is intentionally small. Its first runtime boundary is:
+## v8.5 at a glance
 
 ```text
 Observed / recorded state
@@ -24,60 +20,75 @@ Observed / recorded state
  Future higher-level layers
 ```
 
-`FieldState` is a validated, immutable representation of a **recorded state**. It is a data-contract boundary, not an inference engine, decision system, or intervention mechanism.
+`FieldState` is a validated, immutable representation of a **recorded state**. It is deliberately not an inference engine, causal engine, decision system, or intervention mechanism.
 
-### Implemented in v8.5
+### Implemented
 
-- immutable state snapshots;
-- non-empty `field_id` validation;
-- non-empty `session_id` validation;
+- immutable `FieldState` snapshots;
+- non-empty `field_id` and `session_id` validation;
 - non-negative integer sequence validation;
 - timezone-aware timestamp validation;
-- explicit timestamps for deterministic testing and replay;
 - finite numeric metric validation;
 - read-only metric storage;
-- failure-mode identifier validation;
-- duplicate failure-mode rejection;
+- failure-mode identifier validation and duplicate rejection;
 - `governance_confidence` validation in `[0.0, 1.0]`;
-- deterministic metric and failure-mode access;
+- deterministic metric/failure-mode access;
 - UTC-normalized timestamp access;
-- unit tests covering the runtime contract;
-- automated CI on Python 3.10, 3.11, 3.12, and 3.13.
+- contract-focused unit tests;
+- automated CI on Python 3.10–3.13.
 
-See [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) for the normative boundary of `FieldState` and [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md) for implementation status.
+See [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) and [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md).
+
+---
+
+## Demos and dashboards
+
+ACRM has accumulated several interactive HTML dashboards and screen-recorded demonstrations during development. These artifacts are important because they preserve earlier architectural experiments and show how concepts such as interaction fields, failure modes, calibration, temporal state and visualization were explored.
+
+**They are intentionally separated from the v8.5 core.** A dashboard can contain sophisticated UI, simulated values, client-side algorithms, or an apparent runtime without constituting a production implementation of the corresponding subsystem.
+
+The reviewed source material includes:
+
+- **ACRM v8 — Interaction Field Architecture:** interactive SVG topology, `S / ρ / H / RS` displays, component cards, hidden-state observers, behavior-pattern display, temporal entropy chart, counterfactual scenario panel, console, and a timed client-side evaluation sequence.
+- **ACRM v7 — Behavioral Runtime Field:** a 17-item failure-mode registry, severity visualization, causal links, six client-side test definitions, state vector, temporal trajectory, console, and calibration/test runner logic.
+- **Calibration v6.2 dashboard:** calibration-oriented test visualization and result presentation.
+- **Failure Mode Taxonomy source material:** Python-side taxonomy, scoring, and orchestration concepts supplied during development.
+- **Screen recordings:** visual evidence of dashboard execution on a device.
+
+The detailed inventory and evidence boundaries are documented in [`docs/DEMO_CATALOG.md`](docs/DEMO_CATALOG.md). The archive policy is documented in [`docs/demos/README.md`](docs/demos/README.md).
+
+### Evidence rule
+
+Demo behavior is evidence that a prototype was designed or exercised. It is **not automatically evidence that the displayed values came from a production backend**, nor is it scientific validation of the underlying research hypothesis.
+
+For example, the v8 Interaction Field dashboard initializes chart data in JavaScript and changes displayed metrics through timed callbacks when its evaluation control is run. The v7 dashboard likewise contains its own client-side failure-mode registry and test runners. These are valuable prototype behaviors, but they remain classified as demo/research artifacts until their responsibilities are converted into tested v8.5 contracts.
 
 ---
 
 ## Architectural boundary
 
-The most important design rule in the current version is the separation of **observation from interpretation**.
+The central engineering rule is the separation of **observation from interpretation**.
 
-`FieldState` records and validates what was explicitly supplied to it. It does **not** by itself determine:
+`FieldState` records and validates supplied state. It does not determine:
 
 - why a state exists;
-- what caused a state;
-- what a state means;
-- how multiple observations are related;
+- what caused it;
+- what it means;
+- how observations are related;
 - whether a transition occurred;
-- what behavioral pattern should be inferred;
-- what decision should be made;
-- or what intervention should be performed.
-
-These responsibilities remain outside the current runtime component and require their own explicit contracts before implementation.
-
-In particular:
+- which behavioral pattern should be inferred;
+- which decision should be made;
+- or which intervention should be performed.
 
 > **Correlation or temporal succession must not automatically be represented as causality.**
 
-The project therefore treats a software contract as evidence about software behavior, not as proof of a broader scientific or behavioral hypothesis.
+Software tests establish compliance with software contracts. They do not, by themselves, prove a broader scientific or behavioral claim.
 
 ---
 
-## Research context
+## Research evidence levels
 
-ACRM originated from long-term observation and investigation of adaptive behavior in AI systems. The research process developed progressively through observation, questioning, hypothesis formation, conceptual modeling, architectural design, software implementation, and testing.
-
-The repository distinguishes these evidence levels:
+The project distinguishes:
 
 ```text
 Observation
@@ -99,13 +110,11 @@ Software testing
 Empirical evaluation
 ```
 
-These stages are related but not interchangeable. Passing software tests demonstrates compliance with defined software contracts; it does not, by itself, validate a scientific hypothesis about AI behavior.
+These levels are related but not interchangeable.
 
 ---
 
 ## Repository structure
-
-The current `main` branch reflects the implemented v8.5 scope:
 
 ```text
 .github/
@@ -124,76 +133,44 @@ tests/
 
 docs/
 ├── ACRM_v8_5_DEVELOPMENT_STATUS.md
-└── FIELD_STATE_CONTRACT.md
+├── FIELD_STATE_CONTRACT.md
+├── DEMO_CATALOG.md
+└── demos/
+    └── README.md
 
 pyproject.toml
 README.md
 LICENSE
 ```
 
-The structure is expected to evolve only when a new architectural responsibility has a defined contract, implementation boundary, tests, and appropriate evidence.
+The repository may grow as new responsibilities acquire explicit contracts, implementation boundaries, tests, and appropriate evidence.
 
 ---
 
 ## Installation
 
-### Requirements
-
-- Python **3.10 or later**
-- `pip`
-
-### Install the package
-
-```bash
-python -m pip install .
-```
-
-### Install test dependencies
-
-```bash
-python -m pip install ".[test]"
-```
-
-### Development install
-
-For local development, an editable install can be used:
+Requirements: **Python 3.10+** and `pip`.
 
 ```bash
 python -m pip install -e ".[test]"
 ```
 
----
-
-## Running the tests
-
-The project currently uses `pytest` for its unit-test suite.
-
-Run:
+Run the test suite:
 
 ```bash
 python -m pytest -q
 ```
 
-The current suite contains **15 contract-focused tests** for `FieldState`.
+The current v8.5 suite contains **15 contract-focused tests** for `FieldState`.
 
-The CI workflow runs the test suite across:
-
-- Python 3.10
-- Python 3.11
-- Python 3.12
-- Python 3.13
-
-It is triggered by pushes to `main`/`develop` and pull requests targeting those branches.
+CI runs the same project contract across Python 3.10, 3.11, 3.12 and 3.13 on pushes to `main`/`develop` and pull requests targeting those branches.
 
 ---
 
-## FieldState API at a glance
-
-A minimal construction looks like:
+## FieldState API
 
 ```python
 from datetime import datetime, timezone
-
 from acrm_core.field.state import FieldState
 
 state = FieldState(
@@ -205,63 +182,24 @@ state = FieldState(
     failure_modes=("none",),
     governance_confidence=0.5,
 )
-```
 
-Recorded metrics can be accessed deterministically:
-
-```python
 state.metric("score")
-```
-
-Explicitly recorded failure modes can be checked with:
-
-```python
 state.has_failure_mode("none")
 ```
 
-The state is immutable. Attempts to modify dataclass fields or the stored metric mapping are rejected.
-
-For the complete contract, see [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md).
+The complete contract is defined in `docs/FIELD_STATE_CONTRACT.md`.
 
 ---
 
-## CI and engineering checks
+## CI and engineering policy
 
-The repository includes:
+`.github/workflows/ci.yml` checks out the repository, provisions supported Python versions, installs the package and test dependencies, and runs `pytest`.
 
-```text
-.github/workflows/ci.yml
-```
-
-The workflow:
-
-1. checks out the repository;
-2. provisions supported Python versions;
-3. installs the package;
-4. installs test dependencies;
-5. runs the `pytest` suite.
-
-The purpose of CI is to prevent changes from silently violating the implemented software contract.
-
-CI success should be interpreted as **software evidence for the tested contract**, not as scientific validation of ACRM's broader research direction.
+CI is a regression guard for the implemented software contract. A green CI run must not be presented as scientific validation of ACRM's broader research direction.
 
 ---
 
-## Documentation map
-
-| Document / source | Purpose |
-|---|---|
-| `README.md` | Project overview, scope, architecture, installation, testing, and development principles |
-| `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md` | Current v8.5 implementation status and explicit boundaries |
-| `docs/FIELD_STATE_CONTRACT.md` | Normative `FieldState` responsibilities and validation contract |
-| `acrm_core/field/state.py` | Runtime implementation of `FieldState` |
-| `tests/unit/test_field_state.py` | Contract-focused unit tests |
-| `.github/workflows/ci.yml` | Automated CI pipeline |
-| `pyproject.toml` | Python package/build/test configuration |
-
----
-
-## Future research direction
+## Future architecture
 
 A possible future architecture is:
 
@@ -279,76 +217,29 @@ Governance
 Intervention
 ```
 
-This is a **research and architectural direction**, not a statement that these components currently exist.
-
-Each future layer should define, before implementation:
-
-- its responsibility;
-- its inputs and outputs;
-- its relationship to existing contracts;
-- assumptions introduced by the design;
-- failure modes and boundary conditions;
-- testable behavior;
-- and an appropriate validation/evaluation strategy.
-
-No future layer should silently convert observation into causality, explanation, or intervention.
+This is a **research/architectural direction**, not a claim that these components currently exist. Each future layer should define its responsibility, inputs/outputs, assumptions, failure modes, tests, and evaluation strategy before being promoted into the runtime.
 
 ---
 
 ## Development principles
 
-### 1. Observation is not inference
-
-Recorded state should not be treated as an explanation of that state.
-
-### 2. Contracts precede complexity
-
-A new architectural layer should have a clear responsibility and testable contract before becoming a runtime component.
-
-### 3. Implementation evidence is not scientific validation
-
-Passing tests establish behavior of the implemented software. They do not prove broader claims about AI behavior.
-
-### 4. Prefer explicit, deterministic behavior
-
-Important assumptions should be visible in contracts and tests rather than hidden in implicit runtime behavior.
-
-### 5. Reject invalid state early
-
-The current `FieldState` contract rejects invalid recorded state at construction time rather than silently converting it into a potentially misleading value.
-
-### 6. Keep responsibilities separated
-
-Recording, relation detection, transition analysis, governance, and intervention should remain distinct until their contracts justify integration.
+1. **Observation is not inference.**
+2. **Contracts precede complexity.**
+3. **Implementation evidence is not scientific validation.**
+4. **Prefer explicit and deterministic behavior.**
+5. **Reject invalid state early.**
+6. **Keep recording, relation detection, transition analysis, governance and intervention separated until their contracts justify integration.**
+7. **Preserve prototypes as evidence without confusing them with production capabilities.**
 
 ---
 
 ## Contributing
 
-Technical discussion, critical review, and contributions are welcome.
-
-For substantial architectural changes, discuss the proposed change before implementation.
-
-An architectural proposal should, where applicable, identify:
-
-- the problem being addressed;
-- the responsibility of the proposed component;
-- the information it receives;
-- the information it produces;
-- its relationship to existing contracts;
-- assumptions introduced by the design;
-- expected failure modes;
-- and how its behavior can be tested or empirically evaluated.
-
----
+Technical discussion, critical review and contributions are welcome. Substantial architectural changes should identify the problem, component responsibility, inputs/outputs, assumptions, failure modes, tests, and evaluation strategy.
 
 ## Research status
 
-ACRM is an independent research project developed by **Ali Farahani**.
-
-The repository should be evaluated according to the implementation, documentation, tests, and evidence explicitly available in the project.
-
-Broader research questions and hypotheses remain open to further investigation and empirical evaluation.
+ACRM is an independent research project developed by **Ali Farahani**. The repository should be evaluated according to the implementation, documentation, tests, demonstrations, and evidence explicitly available in the project.
 
 ## License
 
