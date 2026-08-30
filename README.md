@@ -4,135 +4,108 @@
 
 ACRM is an independent, research-oriented software project exploring structured approaches to observing and modeling adaptive behavior in AI systems.
 
-The project is developed incrementally, with an emphasis on separating recorded observations from higher-level analysis, inference, governance, and intervention.
+The project is developed incrementally, with a deliberate separation between **recorded observations** and higher-level **analysis, inference, governance, and intervention**.
 
-> **Current status:** ACRM v8.5 currently implements the `FieldState` runtime contract, its unit-test coverage, project packaging, and a GitHub Actions CI pipeline. The broader ACRM architecture remains under research and development.
-
----
-
-## Research Context
-
-ACRM originated from long-term observation and investigation of adaptive behavior in AI systems.
-
-The research developed progressively through observation, questioning, hypothesis formation, conceptual modeling, architectural design, and software implementation.
-
-The project follows a deliberate distinction between research claims and implementation evidence:
-
-- an observation is not an interpretation;
-- an interpretation is not a hypothesis;
-- a hypothesis is not a validated model;
-- an implementation is not validation of the underlying research hypothesis;
-- passing software tests demonstrates compliance with defined software contracts, not the truth of broader scientific claims.
-
-The research and engineering process can therefore be represented as:
-
-**Observation → Questions → Hypotheses → Conceptual Models → Architecture → Testable Contracts → Implementation → Testing → Validation → Empirical Evaluation**
-
-The repository represents the engineering and experimental side of this process.
+> **Current status — ACRM v8.5:** the repository implements the `FieldState` runtime contract, contract-focused unit tests, Python packaging, and automated GitHub Actions CI. The broader ACRM architecture remains a research and development program; future layers are not represented as implemented capabilities unless explicitly documented and tested.
 
 ---
 
-## Current Implementation
+## What ACRM v8.5 currently is
 
-The current development line is focused on **ACRM v8.5**.
-
-The primary implemented component is:
+The current implementation is intentionally small. Its first runtime boundary is:
 
 ```text
-FieldState
+Observed / recorded state
+          │
+          ▼
+     FieldState
+          │
+          ▼
+ Future higher-level layers
 ```
 
-`FieldState` provides an immutable, validated representation of a recorded system state.
+`FieldState` is a validated, immutable representation of a **recorded state**. It is a data-contract boundary, not an inference engine, decision system, or intervention mechanism.
 
-The current implementation establishes contracts for:
+### Implemented in v8.5
 
-* immutable state snapshots;
-* `field_id` validation;
-* `session_id` validation;
-* non-negative sequence values;
-* timezone-aware timestamps;
-* explicit timestamps suitable for deterministic testing and replay;
-* finite numeric metrics;
-* immutable metric storage;
-* failure-mode identifier validation;
-* duplicate failure-mode detection;
-* governance-confidence validation in the range `[0.0, 1.0]`;
-* deterministic metric and failure-mode access.
+- immutable state snapshots;
+- non-empty `field_id` validation;
+- non-empty `session_id` validation;
+- non-negative integer sequence validation;
+- timezone-aware timestamp validation;
+- explicit timestamps for deterministic testing and replay;
+- finite numeric metric validation;
+- read-only metric storage;
+- failure-mode identifier validation;
+- duplicate failure-mode rejection;
+- `governance_confidence` validation in `[0.0, 1.0]`;
+- deterministic metric and failure-mode access;
+- UTC-normalized timestamp access;
+- unit tests covering the runtime contract;
+- automated CI on Python 3.10, 3.11, 3.12, and 3.13.
 
-The implementation is covered by unit tests and is exercised by GitHub Actions across Python 3.10–3.13.
-
-The current v8.5 development status and implementation boundaries are documented in:
-
-`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`
+See [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) for the normative boundary of `FieldState` and [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md) for implementation status.
 
 ---
 
-## Architectural Boundary
+## Architectural boundary
 
-The current architecture deliberately establishes `FieldState` as a boundary around recorded state.
+The most important design rule in the current version is the separation of **observation from interpretation**.
 
-Conceptually:
+`FieldState` records and validates what was explicitly supplied to it. It does **not** by itself determine:
+
+- why a state exists;
+- what caused a state;
+- what a state means;
+- how multiple observations are related;
+- whether a transition occurred;
+- what behavioral pattern should be inferred;
+- what decision should be made;
+- or what intervention should be performed.
+
+These responsibilities remain outside the current runtime component and require their own explicit contracts before implementation.
+
+In particular:
+
+> **Correlation or temporal succession must not automatically be represented as causality.**
+
+The project therefore treats a software contract as evidence about software behavior, not as proof of a broader scientific or behavioral hypothesis.
+
+---
+
+## Research context
+
+ACRM originated from long-term observation and investigation of adaptive behavior in AI systems. The research process developed progressively through observation, questioning, hypothesis formation, conceptual modeling, architectural design, software implementation, and testing.
+
+The repository distinguishes these evidence levels:
 
 ```text
-Observed and recorded state
-            │
-            ▼
-       FieldState
-            │
-            ▼
-   Higher-level processing
+Observation
+    ↓
+Question
+    ↓
+Hypothesis
+    ↓
+Conceptual model
+    ↓
+Architecture
+    ↓
+Testable contract
+    ↓
+Implementation
+    ↓
+Software testing
+    ↓
+Empirical evaluation
 ```
 
-`FieldState` is responsible for representing and validating a recorded state.
-
-It does not, by itself, determine:
-
-* why a state exists;
-* what caused a state;
-* what a state means;
-* how multiple states are related;
-* whether a particular transition occurred;
-* what behavioral pattern should be inferred;
-* what decision should be made;
-* or what intervention should be performed.
-
-These responsibilities are outside the current implementation.
-
-This separation is intentional.
+These stages are related but not interchangeable. Passing software tests demonstrates compliance with defined software contracts; it does not, by itself, validate a scientific hypothesis about AI behavior.
 
 ---
 
-## Future Research Direction
+## Repository structure
 
-Future development may investigate additional architectural layers concerned with relationships between observations, changes across states, analysis, governance, and intervention.
-
-A possible research direction is:
-
-```text
-FieldState
-    ↓
-Relation
-    ↓
-Transition
-    ↓
-Analysis
-    ↓
-Governance
-    ↓
-Intervention
-```
-
-This diagram represents a **research and architectural direction**, not a claim that these components currently exist or have been scientifically validated.
-
-In particular, a relationship between observations should not automatically be interpreted as causality, and an observed difference between states should not automatically be treated as an explanation of the underlying behavior.
-
-Future layers will therefore require explicit definitions, responsibilities, testable contracts, and appropriate validation before they are implemented as part of the framework.
-
----
-
-## Repository Structure
-
-The current repository reflects the implemented v8.5 scope:
+The current `main` branch reflects the implemented v8.5 scope:
 
 ```text
 .github/
@@ -158,7 +131,7 @@ README.md
 LICENSE
 ```
 
-The structure is expected to evolve as additional architectural contracts are defined and implemented.
+The structure is expected to evolve only when a new architectural responsibility has a defined contract, implementation boundary, tests, and appropriate evidence.
 
 ---
 
@@ -166,71 +139,187 @@ The structure is expected to evolve as additional architectural contracts are de
 
 ### Requirements
 
-* Python 3.10 or later
+- Python **3.10 or later**
+- `pip`
 
 ### Install the package
 
-```text
-pip install .
+```bash
+python -m pip install .
 ```
 
 ### Install test dependencies
 
-```text
-pip install ".[test]"
+```bash
+python -m pip install ".[test]"
+```
+
+### Development install
+
+For local development, an editable install can be used:
+
+```bash
+python -m pip install -e ".[test]"
 ```
 
 ---
 
-## Running the Tests
+## Running the tests
 
-The repository uses `pytest` for its current test suite.
+The project currently uses `pytest` for its unit-test suite.
 
 Run:
 
-```text
-pytest
+```bash
+python -m pytest -q
 ```
 
-The current suite contains 15 contract-focused tests for `FieldState`.
+The current suite contains **15 contract-focused tests** for `FieldState`.
 
-GitHub Actions runs the same suite on Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests targeting `main` or `develop`.
+The CI workflow runs the test suite across:
+
+- Python 3.10
+- Python 3.11
+- Python 3.12
+- Python 3.13
+
+It is triggered by pushes to `main`/`develop` and pull requests targeting those branches.
 
 ---
 
-## Documentation
+## FieldState API at a glance
 
-The following documents and source files provide the most direct view of the current implementation:
+A minimal construction looks like:
 
-* `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md` — current v8.5 implementation status and explicit boundaries.
-* `docs/FIELD_STATE_CONTRACT.md` — `FieldState` responsibilities and non-responsibilities.
-* `acrm_core/field/state.py` — runtime `FieldState` implementation.
-* `tests/unit/test_field_state.py` — unit tests for the `FieldState` contract.
-* `.github/workflows/ci.yml` — automated CI test pipeline.
+```python
+from datetime import datetime, timezone
 
-## Development Principles
+from acrm_core.field.state import FieldState
 
-ACRM development follows several principles:
+state = FieldState(
+    field_id="field-1",
+    session_id="session-1",
+    sequence=0,
+    timestamp=datetime.now(timezone.utc),
+    metrics={"score": 1.0},
+    failure_modes=("none",),
+    governance_confidence=0.5,
+)
+```
 
-### 1. Separate observation from inference
+Recorded metrics can be accessed deterministically:
+
+```python
+state.metric("score")
+```
+
+Explicitly recorded failure modes can be checked with:
+
+```python
+state.has_failure_mode("none")
+```
+
+The state is immutable. Attempts to modify dataclass fields or the stored metric mapping are rejected.
+
+For the complete contract, see [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md).
+
+---
+
+## CI and engineering checks
+
+The repository includes:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow:
+
+1. checks out the repository;
+2. provisions supported Python versions;
+3. installs the package;
+4. installs test dependencies;
+5. runs the `pytest` suite.
+
+The purpose of CI is to prevent changes from silently violating the implemented software contract.
+
+CI success should be interpreted as **software evidence for the tested contract**, not as scientific validation of ACRM's broader research direction.
+
+---
+
+## Documentation map
+
+| Document / source | Purpose |
+|---|---|
+| `README.md` | Project overview, scope, architecture, installation, testing, and development principles |
+| `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md` | Current v8.5 implementation status and explicit boundaries |
+| `docs/FIELD_STATE_CONTRACT.md` | Normative `FieldState` responsibilities and validation contract |
+| `acrm_core/field/state.py` | Runtime implementation of `FieldState` |
+| `tests/unit/test_field_state.py` | Contract-focused unit tests |
+| `.github/workflows/ci.yml` | Automated CI pipeline |
+| `pyproject.toml` | Python package/build/test configuration |
+
+---
+
+## Future research direction
+
+A possible future architecture is:
+
+```text
+FieldState
+    ↓
+Relation
+    ↓
+Transition
+    ↓
+Analysis
+    ↓
+Governance
+    ↓
+Intervention
+```
+
+This is a **research and architectural direction**, not a statement that these components currently exist.
+
+Each future layer should define, before implementation:
+
+- its responsibility;
+- its inputs and outputs;
+- its relationship to existing contracts;
+- assumptions introduced by the design;
+- failure modes and boundary conditions;
+- testable behavior;
+- and an appropriate validation/evaluation strategy.
+
+No future layer should silently convert observation into causality, explanation, or intervention.
+
+---
+
+## Development principles
+
+### 1. Observation is not inference
 
 Recorded state should not be treated as an explanation of that state.
 
-### 2. Define boundaries before implementation
+### 2. Contracts precede complexity
 
-A new architectural layer should have a clear responsibility and contract before it becomes a runtime component.
+A new architectural layer should have a clear responsibility and testable contract before becoming a runtime component.
 
-### 3. Keep research claims separate from implementation claims
+### 3. Implementation evidence is not scientific validation
 
-Software implementation and passing tests provide evidence about the software itself. They do not, by themselves, validate broader hypotheses about AI behavior.
+Passing tests establish behavior of the implemented software. They do not prove broader claims about AI behavior.
 
-### 4. Prefer explicit contracts
+### 4. Prefer explicit, deterministic behavior
 
-Important assumptions should be expressed as explicit, testable contracts rather than remaining implicit in implementation behavior.
+Important assumptions should be visible in contracts and tests rather than hidden in implicit runtime behavior.
 
-### 5. Increase complexity only when justified
+### 5. Reject invalid state early
 
-The project prioritizes clarifying architectural responsibilities and their evidence requirements before adding additional runtime components.
+The current `FieldState` contract rejects invalid recorded state at construction time rather than silently converting it into a potentially misleading value.
+
+### 6. Keep responsibilities separated
+
+Recording, relation detection, transition analysis, governance, and intervention should remain distinct until their contracts justify integration.
 
 ---
 
@@ -238,21 +327,22 @@ The project prioritizes clarifying architectural responsibilities and their evid
 
 Technical discussion, critical review, and contributions are welcome.
 
-For substantial architectural changes, please discuss the proposed change before implementation.
+For substantial architectural changes, discuss the proposed change before implementation.
 
-Architectural proposals should, where applicable, identify:
+An architectural proposal should, where applicable, identify:
 
-* the problem being addressed;
-* the responsibility of the proposed component;
-* the information it receives;
-* the information it produces;
-* its relationship to existing contracts;
-* assumptions introduced by the design;
-* and how its behavior can be tested or evaluated.
+- the problem being addressed;
+- the responsibility of the proposed component;
+- the information it receives;
+- the information it produces;
+- its relationship to existing contracts;
+- assumptions introduced by the design;
+- expected failure modes;
+- and how its behavior can be tested or empirically evaluated.
 
 ---
 
-## Research Status
+## Research status
 
 ACRM is an independent research project developed by **Ali Farahani**.
 
