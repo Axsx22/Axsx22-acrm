@@ -1,4 +1,3 @@
-````markdown
 # Axsx22-acrm
 
 ## Adaptive Cognitive Regulation Module (ACRM)
@@ -7,7 +6,7 @@ ACRM is an independent, research-oriented software project exploring structured 
 
 The project is developed incrementally, with an emphasis on separating recorded observations from higher-level analysis, inference, governance, and intervention.
 
-> **Current status:** The present implementation establishes the `FieldState` runtime contract and its test coverage. The broader ACRM architecture remains under research and development.
+> **Current status:** ACRM v8.5 currently implements the `FieldState` runtime contract, its unit-test coverage, project packaging, and a GitHub Actions CI pipeline. The broader ACRM architecture remains under research and development.
 
 ---
 
@@ -41,7 +40,7 @@ The primary implemented component is:
 
 ```text
 FieldState
-````
+```
 
 `FieldState` provides an immutable, validated representation of a recorded system state.
 
@@ -60,7 +59,7 @@ The current implementation establishes contracts for:
 * governance-confidence validation in the range `[0.0, 1.0]`;
 * deterministic metric and failure-mode access.
 
-The current `FieldState` implementation is covered by unit tests.
+The implementation is covered by unit tests and is exercised by GitHub Actions across Python 3.10–3.13.
 
 The current v8.5 development status and implementation boundaries are documented in:
 
@@ -131,16 +130,19 @@ Future layers will therefore require explicit definitions, responsibilities, tes
 
 ---
 
-
----
-
 ## Repository Structure
 
-The current repository is intentionally small and focused on the implemented v8.5 scope.
+The current repository reflects the implemented v8.5 scope:
 
 ```text
+.github/
+└── workflows/
+    └── ci.yml
+
 acrm_core/
+├── __init__.py
 └── field/
+    ├── __init__.py
     └── state.py
 
 tests/
@@ -190,7 +192,9 @@ Run:
 pytest
 ```
 
-The current `FieldState` test suite contains 33 passing tests.
+The current suite contains 15 contract-focused tests for `FieldState`.
+
+GitHub Actions runs the same suite on Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests targeting `main` or `develop`.
 
 ---
 
@@ -202,6 +206,7 @@ The following documents and source files provide the most direct view of the cur
 * `docs/FIELD_STATE_CONTRACT.md` — `FieldState` responsibilities and non-responsibilities.
 * `acrm_core/field/state.py` — runtime `FieldState` implementation.
 * `tests/unit/test_field_state.py` — unit tests for the `FieldState` contract.
+* `.github/workflows/ci.yml` — automated CI test pipeline.
 
 ## Development Principles
 
