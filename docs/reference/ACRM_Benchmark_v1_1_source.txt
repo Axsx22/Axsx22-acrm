@@ -1,0 +1,5 @@
+This repository records the authoritative benchmark source artifact as an external source reference because the GitHub connector used for this maintenance pass accepts UTF-8 repository content directly. The original binary PDF remains available in the supplied research files under the exact source name: ACRM_Benchmark_v1_1 (1).pdf.
+
+Source size: 34703 bytes.
+Source role: ACRM-EVAL benchmark protocol.
+Status: canonical benchmark specification; not equivalent to completed large-scale benchmark results.
