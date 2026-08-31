@@ -1,9 +1,10 @@
 """Session 30: controlled self-evolution orchestration.
 
-This module is deliberately separated from the runtime field controller.  It
-collects already-recorded observations, waits for configured tolerances, asks
-a code-generation boundary for a candidate, verifies that candidate through a
-separate test boundary, and only then aggregates weighted specialist votes.
+This module is deliberately separated from the runtime field controller. It
+collects already-recorded observations, waits for a generation tolerance,
+creates a candidate through an explicit code-generation boundary, verifies the
+candidate through a separate test boundary, and only then aggregates weighted
+specialist votes.
 
 It never mutates the active runtime and never executes generated source.
 A successful result is a *switch recommendation* for an external, controlled
@@ -18,19 +19,17 @@ from typing import Callable, Iterable, Mapping
 
 @dataclass(frozen=True, slots=True)
 class EvolutionTolerance:
-    """Thresholds governing when candidate generation and review may begin."""
+    """Independent gates for generation, test readiness, and switch approval."""
 
     generation_after: int = 3
-    review_after: int = 1
+    successful_tests_before_review: int = 2
     switch_score: float = 0.70
 
     def __post_init__(self) -> None:
         if self.generation_after < 1:
             raise ValueError("generation_after must be >= 1")
-        if self.review_after < 1:
-            raise ValueError("review_after must be >= 1")
-        if self.review_after > self.generation_after:
-            raise ValueError("review_after must be <= generation_after")
+        if self.successful_tests_before_review < 1:
+            raise ValueError("successful_tests_before_review must be >= 1")
         if not 0.0 <= self.switch_score <= 1.0:
             raise ValueError("switch_score must be between 0.0 and 1.0")
 
@@ -39,7 +38,7 @@ class EvolutionTolerance:
 class EvolutionObservation:
     """A neutral observation emitted by Session 30's observation layer.
 
-    The observation is descriptive.  It intentionally carries no score or
+    The observation is descriptive. It intentionally carries no score or
     severity so the recording layer cannot silently become a judge.
     """
 
@@ -49,11 +48,11 @@ class EvolutionObservation:
     context: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not self.observation_id.strip():
+        if not isinstance(self.observation_id, str) or not self.observation_id.strip():
             raise ValueError("observation_id must be non-empty")
-        if not self.kind.strip():
+        if not isinstance(self.kind, str) or not self.kind.strip():
             raise ValueError("kind must be non-empty")
-        if not self.description.strip():
+        if not isinstance(self.description, str) or not self.description.strip():
             raise ValueError("description must be non-empty")
 
 
@@ -64,14 +63,14 @@ class EvolutionCandidate:
     candidate_id: str
     source: str
     based_on: tuple[str, ...]
-    tested: bool = False
-    test_passed: bool = False
+    successful_test_runs: int = 0
+    test_attempts: int = 0
     ready_for_review: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class SpecialistVote:
-    """A specialist's signed assessment for the current evolution topic."""
+    """A specialist's assessment for the current evolution topic."""
 
     specialist_id: str
     vote: float
@@ -84,17 +83,19 @@ class SpecialistVote:
             ("reliability", self.reliability),
             ("relevance", self.relevance),
         ):
-            if not 0.0 <= value <= 1.0:
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                raise TypeError(f"{name} must be numeric")
+            if not 0.0 <= float(value) <= 1.0:
                 raise ValueError(f"{name} must be between 0.0 and 1.0")
 
     @property
     def weight(self) -> float:
-        return self.reliability * self.relevance
+        return float(self.reliability) * float(self.relevance)
 
 
 @dataclass(frozen=True, slots=True)
 class EvolutionDecision:
-    """Outcome of the controlled review; no decision changes the active runtime."""
+    """Outcome of controlled review; it never changes the active runtime."""
 
     status: str
     candidate: EvolutionCandidate | None
@@ -109,12 +110,13 @@ VoteProvider = Callable[[EvolutionCandidate], Iterable[SpecialistVote]]
 
 
 class EvolutionSession30:
-    """Two-stage evolution supervisor for the Session 30 design.
+    """Two-stage self-evolution supervisor for Session 30.
 
-    Stage A is assumed to have produced neutral observations.  Stage B begins
-    only after the configured generation tolerance.  A candidate must then
-    pass the independent test boundary and become review-ready before weighted
-    voting can produce a switch recommendation.
+    Stage A is assumed to produce neutral observations. Stage B begins only
+    after the observation-count tolerance is reached. A generated candidate
+    must accumulate the configured number of *successful independent test
+    runs* before voting is permitted. This second gate is intentionally
+    independent from the observation threshold.
     """
 
     def __init__(
@@ -141,14 +143,14 @@ class EvolutionSession30:
         return self._candidate
 
     def record(self, observation: EvolutionObservation) -> None:
-        """Store an observation without scoring, ranking, or triggering judgment."""
+        """Store an observation without scoring, ranking, or judging it."""
         self._observations.append(observation)
 
     def generation_ready(self) -> bool:
         return len(self._observations) >= self.tolerance.generation_after
 
     def generate_candidate(self) -> EvolutionCandidate | None:
-        """Ask the code-generation boundary for a candidate once the tolerance is met."""
+        """Generate a candidate only after the first tolerance is reached."""
         if not self.generation_ready():
             return None
         candidate = self._generator(tuple(self._observations))
@@ -158,32 +160,38 @@ class EvolutionSession30:
         return candidate
 
     def review(self) -> EvolutionDecision:
-        """Test, then vote; return a switch recommendation only after both gates pass."""
+        """Run one test attempt; vote only after the independent test gate passes."""
         if self._candidate is None:
             return EvolutionDecision(
                 "WAIT_GENERATION", None, None, 0,
                 "generation tolerance has not produced a candidate",
             )
 
-        if len(self._observations) < self.tolerance.review_after:
-            return EvolutionDecision(
-                "WAIT_REVIEW", self._candidate, None, 0,
-                "review tolerance has not been reached",
-            )
-
-        passed = self._tester(self._candidate)
+        current = self._candidate
+        passed = bool(self._tester(current))
+        attempts = current.test_attempts + 1
+        successful = current.successful_test_runs + int(passed)
+        ready = successful >= self.tolerance.successful_tests_before_review
         self._candidate = EvolutionCandidate(
-            candidate_id=self._candidate.candidate_id,
-            source=self._candidate.source,
-            based_on=self._candidate.based_on,
-            tested=True,
-            test_passed=passed,
-            ready_for_review=passed,
+            candidate_id=current.candidate_id,
+            source=current.source,
+            based_on=current.based_on,
+            successful_test_runs=successful,
+            test_attempts=attempts,
+            ready_for_review=ready,
         )
+
         if not passed:
             return EvolutionDecision(
                 "REJECT_TEST", self._candidate, None, 0,
-                "candidate failed the independent test boundary",
+                "candidate failed the current independent test attempt",
+            )
+
+        if not ready:
+            remaining = self.tolerance.successful_tests_before_review - successful
+            return EvolutionDecision(
+                "TESTING_PROGRESS", self._candidate, None, 0,
+                f"candidate passed this test; {remaining} successful test run(s) remain before review",
             )
 
         votes = tuple(self._vote_provider(self._candidate))
@@ -194,13 +202,13 @@ class EvolutionSession30:
                 "no positive specialist weight is available",
             )
 
-        weighted_score = sum(v.vote * v.weight for v in votes) / total_weight
+        weighted_score = sum(float(v.vote) * v.weight for v in votes) / total_weight
         if weighted_score >= self.tolerance.switch_score:
             return EvolutionDecision(
                 "SWITCH_RECOMMENDED", self._candidate, weighted_score, len(votes),
-                "candidate passed testing and reached the weighted vote threshold",
+                "candidate passed the test gate and reached the weighted vote threshold",
             )
         return EvolutionDecision(
             "RETAIN_CURRENT", self._candidate, weighted_score, len(votes),
-            "candidate passed testing but did not reach the weighted vote threshold",
+            "candidate passed the test gate but did not reach the weighted vote threshold",
         )
