@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from math import isfinite
+from statistics import median
 from typing import Iterable, Mapping
 
 from acrm_core.evolution.session_c import EvolutionObservation, ObservationKind
@@ -12,7 +13,7 @@ from acrm_core.evolution.session_c import EvolutionObservation, ObservationKind
 
 @dataclass(frozen=True, slots=True)
 class TrajectoryProfile:
-    """Descriptive trajectory statistics; no judgment is assigned."""
+    """Descriptive temporal profile; no judgment is assigned."""
     observation_count: int
     by_kind: Mapping[ObservationKind, int]
     first_observed_at: datetime | None
@@ -23,26 +24,41 @@ class TrajectoryProfile:
 
 @dataclass(frozen=True, slots=True)
 class DynamicEnvelope:
-    """System-relative normalized operating envelope."""
-    reference_capacity: float = 1.0
-    warning_fraction: float = 0.8
-    critical_fraction: float = 1.0
+    """Empirically derived operating envelope for one runtime signal."""
+    metric_name: str
+    baseline: float
+    warning_limit: float
+    critical_limit: float
+    sample_count: int
 
     def __post_init__(self) -> None:
-        for name, value in (("reference_capacity", self.reference_capacity), ("warning_fraction", self.warning_fraction), ("critical_fraction", self.critical_fraction)):
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(float(value)):
-                raise ValueError(f"{name} must be finite numeric")
-        if self.reference_capacity <= 0:
-            raise ValueError("reference_capacity must be positive")
-        if not 0 < self.warning_fraction <= self.critical_fraction:
-            raise ValueError("warning_fraction must be > 0 and <= critical_fraction")
+        if not isinstance(self.metric_name, str) or not self.metric_name.strip():
+            raise ValueError("metric_name must be non-empty")
+        if not all(isfinite(float(v)) for v in (self.baseline, self.warning_limit, self.critical_limit)):
+            raise ValueError("envelope values must be finite")
+        if self.sample_count < 1:
+            raise ValueError("sample_count must be >= 1")
+        if self.warning_limit > self.critical_limit:
+            raise ValueError("warning_limit cannot exceed critical_limit")
 
 
 @dataclass(frozen=True, slots=True)
 class ThresholdApproach:
-    normalized_load: float
+    """Current signal position relative to a field-derived envelope."""
+    value: float
     state: str
     distance_to_critical: float
+
+
+@dataclass(frozen=True, slots=True)
+class EvolutionReadiness:
+    """C-B inference that a trajectory is approaching a limitation."""
+    state: str
+    approach: ThresholdApproach
+    persistence: float
+    observation_count: int
+    ready: bool
+    reason: str
 
 
 class TrajectoryAnalyzer:
@@ -59,16 +75,88 @@ class TrajectoryAnalyzer:
         persistence = 0.0
         if len(ordered) > 1:
             persistence = sum(a.kind == b.kind for a, b in zip(ordered, ordered[1:])) / (len(ordered) - 1)
-        return TrajectoryProfile(len(items), dict(counts), ordered[0].observed_at_utc if ordered else None, ordered[-1].observed_at_utc if ordered else None, recurrence, persistence)
+        return TrajectoryProfile(
+            len(items), dict(counts),
+            ordered[0].observed_at_utc if ordered else None,
+            ordered[-1].observed_at_utc if ordered else None,
+            recurrence, persistence,
+        )
 
-    def approach(self, normalized_load: float, envelope: DynamicEnvelope) -> ThresholdApproach:
-        load = float(normalized_load)
-        if not isfinite(load) or load < 0:
-            raise ValueError("normalized_load must be finite and non-negative")
-        if load >= envelope.critical_fraction:
+
+class FieldEnvelopeEstimator:
+    """Derive warning/critical limits from the field's own numeric history."""
+
+    def estimate(
+        self,
+        observations: Iterable[EvolutionObservation],
+        *,
+        metric_name: str,
+        warning_quantile: float = 0.90,
+        critical_quantile: float = 0.975,
+    ) -> DynamicEnvelope:
+        if not 0.0 < warning_quantile <= critical_quantile <= 1.0:
+            raise ValueError("quantiles must satisfy 0 < warning <= critical <= 1")
+        values: list[float] = []
+        for observation in observations:
+            value = observation.context.get(metric_name)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and isfinite(float(value)):
+                values.append(float(value))
+        if not values:
+            raise ValueError(f"no numeric field history for metric {metric_name!r}")
+        ordered = sorted(values)
+        return DynamicEnvelope(
+            metric_name=metric_name,
+            baseline=median(ordered),
+            warning_limit=self._quantile(ordered, warning_quantile),
+            critical_limit=self._quantile(ordered, critical_quantile),
+            sample_count=len(ordered),
+        )
+
+    @staticmethod
+    def _quantile(values: list[float], q: float) -> float:
+        if len(values) == 1:
+            return values[0]
+        position = (len(values) - 1) * q
+        lower = int(position)
+        upper = min(lower + 1, len(values) - 1)
+        fraction = position - lower
+        return values[lower] + (values[upper] - values[lower]) * fraction
+
+
+class DynamicReadinessEvaluator:
+    """Detect persistent approach to a field-derived limit."""
+
+    def evaluate(
+        self,
+        observations: Iterable[EvolutionObservation],
+        *,
+        envelope: DynamicEnvelope,
+        current_value: float,
+        min_observations: int = 3,
+        persistence_floor: float = 0.5,
+    ) -> EvolutionReadiness:
+        if min_observations < 1:
+            raise ValueError("min_observations must be >= 1")
+        if not 0.0 <= persistence_floor <= 1.0:
+            raise ValueError("persistence_floor must be between 0 and 1")
+        profile = TrajectoryAnalyzer().profile(observations)
+        value = float(current_value)
+        if not isfinite(value):
+            raise ValueError("current_value must be finite")
+        if value >= envelope.critical_limit:
             state = "CRITICAL"
-        elif load >= envelope.warning_fraction:
+        elif value >= envelope.warning_limit:
             state = "WARNING"
         else:
             state = "NORMAL"
-        return ThresholdApproach(load, state, max(0.0, envelope.critical_fraction - load))
+        approach = ThresholdApproach(value, state, max(0.0, envelope.critical_limit - value))
+        ready = profile.observation_count >= min_observations and state in {"WARNING", "CRITICAL"} and profile.persistence >= persistence_floor
+        if state == "NORMAL":
+            reason = "current signal remains inside the field-derived envelope"
+        elif profile.observation_count < min_observations:
+            reason = "insufficient trajectory history for an evolution signal"
+        elif profile.persistence < persistence_floor:
+            reason = "approach is not persistent enough in the observed trajectory"
+        else:
+            reason = "trajectory persistently approaches or occupies the field-derived limit"
+        return EvolutionReadiness(state, approach, profile.persistence, profile.observation_count, ready, reason)
