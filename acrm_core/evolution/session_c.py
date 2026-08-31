@@ -2,10 +2,10 @@
 
 Session C is split into two deliberately separated responsibilities:
 
-1. Observation: record factual runtime signals without scoring, judging, or
-   deciding whether an evolution is needed.
-2. Evolution: after an explicit observation tolerance is reached, generate a
-   candidate, test it independently, and only then collect topic-aware,
+1. C-A / Observation: record factual runtime signals without scoring, judging,
+   inferring, or deciding whether an evolution is needed.
+2. C-B / Evolution: after an explicit observation tolerance is reached, obtain
+   a candidate, test it independently, and only then collect topic-aware,
    reliability/relevance-weighted specialist votes.
 
 Session C never mutates or executes the active runtime. A successful review
@@ -15,79 +15,20 @@ produces a switch recommendation for an external controlled handoff.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
 from math import isfinite
 from types import MappingProxyType
 from typing import Callable, Iterable, Mapping
 
-
-class ObservationKind(str, Enum):
-    """Neutral classes of runtime observations."""
-
-    PRESSURE = "pressure"
-    AMBIGUITY = "ambiguity"
-    MISSING_CAPABILITY = "missing_capability"
-    EVOLUTION_SIGNAL = "evolution_signal"
-    FAILURE = "failure"
-
-
-@dataclass(frozen=True, slots=True)
-class EvolutionObservation:
-    """Immutable factual observation; it contains no severity or score."""
-
-    observation_id: str
-    kind: ObservationKind | str
-    description: str
-    observed_at: datetime
-    context: Mapping[str, object] = field(default_factory=dict)
-    source: str = "session_c"
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.observation_id, str) or not self.observation_id.strip():
-            raise ValueError("observation_id must be non-empty")
-        if isinstance(self.kind, str):
-            try:
-                object.__setattr__(self, "kind", ObservationKind(self.kind))
-            except ValueError as exc:
-                raise ValueError("kind must be a supported ObservationKind") from exc
-        elif not isinstance(self.kind, ObservationKind):
-            raise TypeError("kind must be an ObservationKind or supported string")
-        if not isinstance(self.description, str) or not self.description.strip():
-            raise ValueError("description must be non-empty")
-        if not isinstance(self.observed_at, datetime):
-            raise TypeError("observed_at must be a datetime")
-        if self.observed_at.tzinfo is None or self.observed_at.utcoffset() is None:
-            raise ValueError("observed_at must be timezone-aware")
-        if not isinstance(self.context, Mapping):
-            raise TypeError("context must be a mapping")
-        if not isinstance(self.source, str) or not self.source.strip():
-            raise ValueError("source must be non-empty")
-        object.__setattr__(self, "context", MappingProxyType(dict(self.context)))
-
-    @property
-    def observed_at_utc(self) -> datetime:
-        return self.observed_at.astimezone(timezone.utc)
-
-
-class ObservationLog:
-    """Append-only neutral observation store."""
-
-    def __init__(self) -> None:
-        self._items: list[EvolutionObservation] = []
-
-    def record(self, observation: EvolutionObservation) -> None:
-        if not isinstance(observation, EvolutionObservation):
-            raise TypeError("observation must be an EvolutionObservation")
-        self._items.append(observation)
-
-    def snapshot(self) -> tuple[EvolutionObservation, ...]:
-        return tuple(self._items)
+from ..session_c.observation import (
+    EvolutionObservation,
+    ObservationKind,
+    ObservationLog,
+)
 
 
 @dataclass(frozen=True, slots=True)
 class EvolutionTolerance:
-    """Independent gates for generation, testing, and switch recommendation."""
+    """Independent gates for candidate generation, testing, and review."""
 
     generation_after: int = 3
     successful_tests_before_review: int = 2
@@ -98,7 +39,9 @@ class EvolutionTolerance:
             raise TypeError("generation_after must be an integer")
         if self.generation_after < 1:
             raise ValueError("generation_after must be >= 1")
-        if not isinstance(self.successful_tests_before_review, int) or isinstance(self.successful_tests_before_review, bool):
+        if not isinstance(self.successful_tests_before_review, int) or isinstance(
+            self.successful_tests_before_review, bool
+        ):
             raise TypeError("successful_tests_before_review must be an integer")
         if self.successful_tests_before_review < 1:
             raise ValueError("successful_tests_before_review must be >= 1")
@@ -130,6 +73,8 @@ class EvolutionCandidate:
             raise ValueError("test counters cannot be negative")
         if self.successful_test_runs > self.test_attempts:
             raise ValueError("successful_test_runs cannot exceed test_attempts")
+        if not isinstance(self.ready_for_review, bool):
+            raise TypeError("ready_for_review must be boolean")
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,16 +167,17 @@ class EvolutionSessionC:
         return self._review_complete
 
     def record(self, observation: EvolutionObservation) -> None:
-        """Record a neutral observation; never score or judge it."""
+        """C-A: record a neutral observation; never score or judge it."""
         if self._review_complete:
             raise RuntimeError("review cycle is complete; start a new Session C cycle")
         self._observation_log.record(observation)
 
     def generation_ready(self) -> bool:
+        """Return whether the first explicit observation tolerance is reached."""
         return len(self.observations) >= self.tolerance.generation_after
 
     def generate_candidate(self) -> EvolutionCandidate | None:
-        """Cross the first tolerance and create exactly one pending candidate."""
+        """C-B: cross the first tolerance and create one pending candidate."""
         if self._candidate is not None:
             return self._candidate
         if not self.generation_ready():
