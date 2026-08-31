@@ -1,19 +1,25 @@
 """Controlled ACRM self-evolution components."""
 
-from .session30 import (
+from .session_c import (
     EvolutionCandidate,
+    EvolutionContext,
     EvolutionDecision,
     EvolutionObservation,
-    EvolutionSession30,
+    EvolutionSessionC,
     EvolutionTolerance,
+    ObservationKind,
+    ObservationLog,
     SpecialistVote,
 )
 
 __all__ = [
     "EvolutionCandidate",
+    "EvolutionContext",
     "EvolutionDecision",
     "EvolutionObservation",
-    "EvolutionSession30",
+    "EvolutionSessionC",
     "EvolutionTolerance",
+    "ObservationKind",
+    "ObservationLog",
     "SpecialistVote",
 ]
