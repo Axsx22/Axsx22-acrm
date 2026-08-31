@@ -8,7 +8,7 @@ def generator(observations):
     return EvolutionCandidate("candidate-1", "candidate source", tuple(o.observation_id for o in observations))
 
 
-def tester(candidate):
+def candidate_tester(candidate):
     return True
 
 
@@ -18,7 +18,7 @@ def votes(candidate, context):
 
 def test_engine_waits_for_dynamic_tolerance_before_generation():
     items = tuple(obs(i, ObservationKind.PRESSURE, float(i)) for i in range(10))
-    engine = SessionCEngine(observations=items, metric_name="load", current_value=4.0, generator=generator, tester=tester, vote_provider=votes)
+    engine = SessionCEngine(observations=items, metric_name="load", current_value=4.0, generator=generator, tester=candidate_tester, vote_provider=votes)
     decision = engine.evolve()
     assert decision.status == "WAIT_DYNAMIC_TOLERANCE"
     assert engine.candidate is None
@@ -26,7 +26,7 @@ def test_engine_waits_for_dynamic_tolerance_before_generation():
 
 def test_engine_runs_test_then_weighted_review_after_dynamic_trigger():
     items = tuple(obs(i, ObservationKind.PRESSURE, float(i)) for i in range(10))
-    engine = SessionCEngine(observations=items, metric_name="load", current_value=8.1, generator=generator, tester=tester, vote_provider=votes)
+    engine = SessionCEngine(observations=items, metric_name="load", current_value=8.1, generator=generator, tester=candidate_tester, vote_provider=votes)
     first = engine.evolve()
     assert first.status == "TESTING_PROGRESS"
     second = engine.evolve()
