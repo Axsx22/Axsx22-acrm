@@ -19,7 +19,7 @@ def observation(number: int) -> EvolutionObservation:
         kind=ObservationKind.PRESSURE,
         description=f"runtime pressure observation {number}",
         observed_at=datetime(2026, 8, 31, 12, number, tzinfo=timezone.utc),
-        context={"sequence": number},
+        context={"signal": "pressure", "sequence": number},
     )
 
 
@@ -65,15 +65,12 @@ def test_observation_recording_is_neutral_and_generation_is_gated():
 
 
 def test_observation_has_no_severity_or_score_and_context_is_immutable():
-    raw = {"signal": "pressure"}
     item = observation(1)
-    object.__setattr__(item, "context", item.context)
     assert item.kind is ObservationKind.PRESSURE
     assert not hasattr(item, "severity")
     assert not hasattr(item, "score")
     with pytest.raises(TypeError):
         item.context["new"] = "value"
-    raw["signal"] = "changed"
     assert item.context["signal"] == "pressure"
 
 
