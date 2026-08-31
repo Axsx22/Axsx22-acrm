@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -11,14 +11,17 @@ from acrm_core.evolution.session_c import (
     ObservationKind,
     SpecialistVote,
 )
+from acrm_core.session_c.observation import EvolutionObservation as CanonicalObservation
 
 
-def observation(number: int) -> EvolutionObservation:
+def observation(number: int, *, offset_hours: int = 0) -> EvolutionObservation:
     return EvolutionObservation(
         observation_id=f"obs-{number}",
         kind=ObservationKind.PRESSURE,
         description=f"runtime pressure observation {number}",
-        observed_at=datetime(2026, 8, 31, 12, number, tzinfo=timezone.utc),
+        observed_at=datetime(
+            2026, 8, 31, 12, number, tzinfo=timezone(timedelta(hours=offset_hours))
+        ),
         context={"signal": "pressure", "sequence": number},
     )
 
@@ -64,6 +67,11 @@ def test_observation_recording_is_neutral_and_generation_is_gated():
     assert candidate.based_on == ("obs-1", "obs-2", "obs-3")
 
 
+def test_observation_layer_uses_canonical_record_type():
+    item = observation(1)
+    assert isinstance(item, CanonicalObservation)
+
+
 def test_observation_has_no_severity_or_score_and_context_is_immutable():
     item = observation(1)
     assert item.kind is ObservationKind.PRESSURE
@@ -74,6 +82,12 @@ def test_observation_has_no_severity_or_score_and_context_is_immutable():
     assert item.context["signal"] == "pressure"
 
 
+def test_observation_timestamp_is_normalized_to_utc():
+    item = observation(1, offset_hours=4)
+    assert item.observed_at.tzinfo == timezone.utc
+    assert item.observed_at_utc == item.observed_at
+
+
 def test_observation_requires_timezone_aware_timestamp():
     with pytest.raises(ValueError):
         EvolutionObservation(
@@ -82,6 +96,13 @@ def test_observation_requires_timezone_aware_timestamp():
             "pressure observed",
             datetime(2026, 8, 31, 12, 0),
         )
+
+
+def test_duplicate_observation_ids_are_rejected():
+    session = make_session()
+    session.record(observation(1))
+    with pytest.raises(ValueError, match="duplicate observation_id"):
+        session.record(observation(1))
 
 
 def test_voting_is_blocked_until_successful_test_tolerance():
