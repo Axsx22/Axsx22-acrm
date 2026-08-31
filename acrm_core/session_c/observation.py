@@ -51,11 +51,12 @@ class EvolutionObservation:
             raise TypeError("context must be a mapping")
         if not isinstance(self.source, str) or not self.source.strip():
             raise ValueError("source must be non-empty")
+        object.__setattr__(self, "observed_at", self.observed_at.astimezone(timezone.utc))
         object.__setattr__(self, "context", MappingProxyType(dict(self.context)))
 
     @property
     def observed_at_utc(self) -> datetime:
-        return self.observed_at.astimezone(timezone.utc)
+        return self.observed_at
 
 
 # Backward-compatible short name for callers that used the earlier draft.
@@ -63,15 +64,19 @@ Observation = EvolutionObservation
 
 
 class ObservationLog:
-    """Append-only neutral observation store."""
+    """Append-only neutral observation store with unique observation IDs."""
 
     def __init__(self) -> None:
         self._items: list[EvolutionObservation] = []
+        self._ids: set[str] = set()
 
     def record(self, observation: EvolutionObservation) -> None:
         if not isinstance(observation, EvolutionObservation):
             raise TypeError("observation must be an EvolutionObservation")
+        if observation.observation_id in self._ids:
+            raise ValueError(f"duplicate observation_id: {observation.observation_id}")
         self._items.append(observation)
+        self._ids.add(observation.observation_id)
 
     def snapshot(self) -> tuple[EvolutionObservation, ...]:
         return tuple(self._items)
