@@ -2,9 +2,9 @@ name: ACRM v8.5 CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, session-c]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, session-c]
 
 permissions:
   contents: read
