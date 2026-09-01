@@ -44,6 +44,7 @@ def test_envelope_is_derived_from_field_history():
     assert envelope.sample_count == 10
     assert envelope.warning_limit < envelope.critical_limit
     assert envelope.baseline == 4.5
+    assert envelope.direction == "high"
 
 
 def test_envelope_rejects_invalid_quantile_order():
@@ -119,9 +120,14 @@ def test_persistent_approach_can_prepare_before_critical():
     assert result.ready is True
 
 
-def test_low_direction_supports_lower_is_worse_signals():
+def test_low_direction_derives_lower_tail_limits():
     items = tuple(obs(i, ObservationKind.PRESSURE, float(10 - i)) for i in range(10))
-    envelope = FieldEnvelopeEstimator().estimate(items, metric_name="load")
+    envelope = FieldEnvelopeEstimator().estimate(
+        items, metric_name="load", direction="low"
+    )
+    assert envelope.direction == "low"
+    assert envelope.warning_limit > envelope.critical_limit
+
     result = DynamicReadinessEvaluator().evaluate(
         items,
         envelope=envelope,
@@ -143,6 +149,18 @@ def test_invalid_signal_direction_is_rejected():
             envelope=envelope,
             current_value=2.0,
             direction="sideways",
+        )
+
+
+def test_mismatched_signal_direction_is_rejected():
+    items = tuple(obs(i, ObservationKind.PRESSURE, float(i)) for i in range(3))
+    envelope = FieldEnvelopeEstimator().estimate(items, metric_name="load")
+    with pytest.raises(ValueError, match="match"):
+        DynamicReadinessEvaluator().evaluate(
+            items,
+            envelope=envelope,
+            current_value=2.0,
+            direction="low",
         )
 
 
