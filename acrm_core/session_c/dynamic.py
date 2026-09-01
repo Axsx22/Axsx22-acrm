@@ -8,7 +8,7 @@ from math import isfinite
 from statistics import median
 from typing import Iterable, Mapping
 
-from acrm_core.evolution.session_c import EvolutionObservation, ObservationKind
+from acrm_core.session_c.observation import EvolutionObservation, ObservationKind
 
 @dataclass(frozen=True, slots=True)
 class TrajectoryProfile:
