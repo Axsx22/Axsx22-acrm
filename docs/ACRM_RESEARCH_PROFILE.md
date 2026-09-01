@@ -2,70 +2,108 @@
 
 ## Overview
 
-ACRM (Adaptive Cognitive Regulation Module) is an independent research and engineering project exploring how long-running LLM-based systems can become more observable, evaluable, and governable.
+ACRM (Adaptive Cognitive Regulation Module) is an independent research and engineering project investigating how long-running LLM-based systems can become more observable, evaluable, and governable.
 
-The project does not attempt to replace foundation models. It investigates external architectural layers for observing and managing evolving system state, behavioral drift, and trajectory-level consistency.
+ACRM does not attempt to replace foundation models or modify model weights. It explores external architectural layers for observing system state evolution, behavioral drift, and trajectory-level consistency.
 
 ## Research Origin
 
 ACRM emerged through an iterative research process:
 
-Observation → Research Question → Hypothesis → Architecture → Prototype → Contract → Implementation → Testing → Evaluation
+```text
+Observation
+↓
+Research Question
+↓
+Hypothesis
+↓
+Architecture
+↓
+Prototype
+↓
+Contract
+↓
+Implementation
+↓
+Testing
+↓
+Evaluation
+```
 
-Early exploration focused on long-horizon human–LLM interaction, behavioral consistency, failure patterns, and the limits of short-horizon evaluation.
+The research direction developed through long-horizon human–LLM interaction analysis, observation of behavioral consistency challenges, and investigation of limitations in snapshot-based evaluation approaches.
 
 ## Core Research Question
 
-How can an LLM-based system remain observable and governable as its state and behavior evolve across extended interactions?
+How can LLM-based systems remain observable, evaluable, and governable as their state, behavior, and interactions evolve over extended operation?
 
 ## Current Engineering Status
 
-The repository currently contains a bounded engineering foundation centered around explicit contracts, immutable state representation, validation rules, testing, and documented evidence boundaries.
+The repository contains a bounded engineering foundation centered around:
 
-Implemented software should be interpreted separately from broader research hypotheses.
+- explicit contracts;
+- immutable state representation;
+- validation rules;
+- executable tests;
+- CI automation;
+- documented evidence boundaries.
 
-## Research Directions
+Implemented software demonstrates defined engineering behavior. Broader research hypotheses require additional empirical validation.
 
-Current areas of interest include:
+## Research Focus
+
+ACRM explores:
 
 - behavioral drift analysis;
-- trajectory integrity over long interactions;
-- runtime governance layers;
+- trajectory integrity;
+- runtime governance architectures;
 - state evolution monitoring;
-- multi-layer AI system observability.
+- multi-layer AI system observability;
+- long-horizon evaluation methods.
 
 ## Evidence Discipline
 
-ACRM distinguishes between:
+ACRM separates:
 
-- historical research observations;
-- conceptual architecture;
-- software contracts;
-- implementation;
+- observations;
+- hypotheses;
+- conceptual architectures;
+- contracts;
+- implementations;
 - tests;
-- empirical evaluation.
+- empirical evaluation;
+- independent reproduction.
 
-No research claim is considered established solely because a prototype or implementation exists.
+A prototype or implementation is not considered proof of a broader scientific claim without appropriate evaluation.
 
-## Collaboration Opportunity
+## Collaboration & Research Expansion Opportunity
 
 ACRM is open to collaboration with:
 
 - AI research laboratories;
-- universities;
+- universities and research groups;
 - AI infrastructure teams;
-- strategic technology investors interested in emerging AI systems research.
+- strategic technology partners and investors interested in emerging AI systems research.
 
-Potential collaboration areas include:
+Potential collaboration areas:
 
-- long-horizon experiments;
-- multi-model evaluation;
-- GPU and API-supported research environments;
-- independent validation;
-- runtime governance studies.
+- GPU-supported experiments;
+- frontier model API access;
+- long-horizon evaluation environments;
+- independent technical review;
+- multi-model comparative studies;
+- runtime governance research.
 
-## Future Research Expansion
+The objective is not to fund an unvalidated concept, but to enable the next experimental phase of an existing research and engineering foundation.
 
-The next phase requires larger experimental capacity to evaluate the framework under broader conditions, including extended sessions, multiple models, and larger-scale behavioral analysis.
+## Future Direction
 
-The objective is not simply to build another AI model, but to investigate the infrastructure required for reliable, observable, and governable AI systems.
+Future research aims to investigate:
+
+- trajectory-level behavioral constraints;
+- state lineage tracking;
+- governance mechanisms for persistent AI systems;
+- reproducible evaluation frameworks.
+
+The long-term goal is contributing toward more reliable, transparent, and governable AI system architectures.
+
+— Ali Farahani
