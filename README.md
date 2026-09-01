@@ -4,13 +4,13 @@
 
 ACRM is designed and developed by **Ali Farahani**, independent AI researcher and system architect, as part of a broader human–LLM collaborative research program.
 
-> **Repository principle:** ACRM did not begin as a fully specified engineering system. Its architecture emerged iteratively through observation, questioning, hypothesis formation, interaction with multiple LLMs, architectural experimentation, implementation, testing, and revision. This repository therefore preserves artifacts from different stages of that evolution while maintaining an explicit boundary between historical research, conceptual architecture, implemented software, and future work.
+> **Repository principle:** ACRM did not begin as a fully specified engineering system. Its architecture emerged iteratively through observation, questioning, hypothesis formation, interaction with multiple LLMs, and incremental refinement. The repository therefore contains not only the current implementation but the evidence of that evolution.
 
 ---
 
 ## 1. What is ACRM?
 
-ACRM (Adaptive Cognitive Regulation Module) is a research architecture concerned with how an LLM-based cognitive system can represent, observe, evaluate, and govern evolving system state and behavior over time.
+ACRM (Adaptive Cognitive Regulation Module) is a research architecture concerned with how an LLM-based cognitive system can represent, observe, evaluate, and govern evolving system state and behavior.
 
 The central research question is:
 
@@ -37,7 +37,7 @@ ACRM should therefore be understood as an evolving architectural research progra
 
 ### How the architecture emerged
 
-ACRM was not designed top-down from a complete initial specification. It emerged through a long-running empirical and collaborative process in which observations generated questions, questions generated hypotheses, and repeated interaction with multiple LLMs was used to examine, challenge, compare, and reformulate possible solutions.
+ACRM was not designed top-down from a complete initial specification. It emerged through a long-running empirical and collaborative process in which observations generated questions, questions generated hypotheses, and hypotheses were tested against implementation and experiment.
 
 A simplified representation of that process is:
 
@@ -63,11 +63,11 @@ Revision
 New architectural state
 ```
 
-Multiple LLMs participated as analytical collaborators: ideas and interpretations could be compared across models, and model-generated critiques could themselves become inputs to further analysis. The human architect remained the common integration point and retained responsibility for architectural decisions.
+Multiple LLMs participated as analytical collaborators: ideas and interpretations could be compared across models, and model-generated critiques could themselves become inputs to further analysis.
 
 ### Formation conditions
 
-The early research was conducted independently and under constrained practical conditions, using consumer hardware and extensive direct interaction with LLMs rather than a conventional academic laboratory or institutional engineering team. These conditions are recorded as part of the architecture's provenance; they are **not** presented as evidence of technical or scientific validity.
+The early research was conducted independently and under constrained practical conditions, using consumer hardware and extensive direct interaction with LLMs rather than a conventional academic laboratory or research team.
 
 Historical research records are preserved because they explain how architectural questions and decisions emerged. They should not be confused with the current implementation specification.
 
@@ -150,9 +150,9 @@ Authoritative current-status documents:
 
 ### What v8.5 does not claim
 
-The current core does **not** claim to implement a complete behavioral inference stack, causal-analysis engine, autonomous governance controller, intervention engine, or scientifically validated cognitive model.
+The current core does **not** claim to implement a complete behavioral inference stack, causal-analysis engine, autonomous governance controller, intervention engine, or scientifically validated empirical results.
 
-Potential higher-level capabilities such as relation detection, transition analysis, behavioral analysis, governance, and intervention require their own explicit contracts, implementations, tests, and evaluation evidence before being promoted into the core.
+Potential higher-level capabilities such as relation detection, transition analysis, behavioral analysis, governance, and intervention require their own explicit contracts, implementations, tests, and evaluation strategies.
 
 ---
 
@@ -186,7 +186,7 @@ Software correctness and scientific validity are separate claims and require sep
 
 One of the foundational conceptual artifacts in the ACRM research history is the **Unconscious Bridge Layer**.
 
-The earliest architecture was generated from a conceptual definition of human unconscious processing and subsequently formalized through interaction with the collaborating LLMs. Its purpose in the research history is important: it represents an early architectural seed from which later questions about impasse, alternate processing paths, synthesis, incubation, integrity checking, and output selection developed.
+The earliest architecture was generated from a conceptual definition of human unconscious processing and subsequently formalized through interaction with the collaborating LLMs. Its purpose in the ACRM design is to model how a cognitive system might handle situations where direct, immediate response proves insufficient or problematic.
 
 A simplified conceptual flow is:
 
@@ -201,21 +201,21 @@ No Impasse    High Loss / Stuckness
    ↓                 ↓
 Standard       Unconscious Bridge
 Output              │
-              ┌─────┴───────────┐
-              ↓                 ↓
-       Synthesis Flow     Incubation Pool
-              └─────┬───────────┘
-                    ↓
-              Integrity Gate
-               ↙          ↘
-        Coherent/Resolved   Hard Mismatch
-             ↓                   ↓
-   Unconscious Output       Rejection /
-                            Clarification
-               \             /
-                └─────┬─────┘
-                      ↓
-                 Final Output
+           ┌─────┴───────────┐
+           ↓                 ↓
+    Synthesis Flow     Incubation Pool
+           └─────┬───────────┘
+                 ↓
+           Integrity Gate
+            ↙          ↘
+     Coherent/Resolved   Hard Mismatch
+          ↓                   ↓
+Unconscious Output       Rejection /
+                         Clarification
+        \             /
+         └─────┬─────┘
+               ↓
+          Final Output
 ```
 
 This architecture is currently a **research concept / architectural artifact**, not an implemented runtime capability of v8.5.
@@ -232,7 +232,7 @@ Its historical significance should be preserved separately from claims about pre
 
 The repository contains artifacts from different architectural generations. Earlier research should be read as evidence of architectural evolution, not as a second implementation of the current core.
 
-For example, the repository preserves the v7.9 Obstruction Theory review and its identified limitations. This material is valuable for understanding the evolution of the research, but it is not equivalent to the v8.5 `FieldState` contract.
+For example, the repository preserves the v7.9 Obstruction Theory review and its identified limitations. This material is valuable for understanding the evolution of the research, but it is not evidence that those limitations have been resolved in the current release.
 
 Relevant records include:
 
@@ -260,7 +260,7 @@ Gated higher-level capabilities
 
 ## 8. Roadmap discipline
 
-For an emergent architecture such as ACRM, the roadmap is not a historical description of what was planned from the beginning. It is the **engineering mechanism for turning an organically developed architecture into a controlled, reviewable development sequence**.
+For an emergent architecture such as ACRM, the roadmap is not a historical description of what was planned from the beginning. It is the **engineering mechanism for turning an organically developed research program into an explicit, testable, and managed progression**.
 
 The roadmap must answer:
 
@@ -338,7 +338,7 @@ See:
 
 ### Evidence rule
 
-A dashboard may contain sophisticated UI, simulated values, browser-side algorithms, or apparent runtime behavior. That is evidence of a prototype or demonstration—not automatically evidence of a production backend, scientific validation, or current v8.5 implementation.
+A dashboard may contain sophisticated UI, simulated values, browser-side algorithms, or apparent runtime behavior. That is evidence of a prototype or demonstration—not automatically evidence of a validated or implemented capability.
 
 Historical and demo provenance is deliberately preserved rather than erased, but it is kept separate from implementation claims.
 
@@ -423,7 +423,61 @@ The Markdown update and PowerPoint deck represent the same reporting baseline an
 
 ---
 
-## 13. Installation and tests
+## 13. Research Continuation, Infrastructure Requirements, and Collaboration Opportunity
+
+ACRM has reached a stage where further progress requires transition from independent architectural research into a larger-scale experimental environment.
+
+The current repository represents a validated engineering foundation and preserves the research lineage, architectural decisions, contracts, tests, and evidence boundaries developed throughout the project evolution.
+
+The next research phase requires access to additional infrastructure and experimental capacity, including:
+
+* GPU-based computational resources for larger-scale experiments;
+* API access to multiple frontier AI systems;
+* extended runtime environments for longitudinal evaluation;
+* storage and infrastructure support for long-horizon behavioral analysis;
+* research collaboration and independent review.
+
+This requirement does not represent a request to fund an incomplete or speculative idea.
+
+ACRM is presented as an emerging research architecture that has already progressed through multiple stages:
+
+```text
+Independent observation
+        ↓
+Research hypotheses
+        ↓
+Architectural development
+        ↓
+Prototype experimentation
+        ↓
+Engineering contracts
+        ↓
+Validated software foundation
+        ↓
+Next-stage empirical research
+```
+
+The current objective is to establish collaboration with researchers, engineering teams, AI infrastructure organizations, and potential strategic partners interested in exploring:
+
+* long-horizon LLM behavior;
+* runtime behavioral stability;
+* trajectory-level governance;
+* AI system observability;
+* human–AI collaborative research methodologies.
+
+Potential collaboration models may include:
+
+* research partnership;
+* technical review and evaluation;
+* infrastructure sponsorship;
+* investment for experimental scaling;
+* joint development of future ACRM generations.
+
+The long-term direction of ACRM is not to replace existing LLM architectures, but to investigate whether additional behavioral regulation and observability layers can improve the reliability, coherence, and governance of complex AI systems operating over extended periods.
+
+---
+
+## 14. Installation and tests
 
 Requirements: **Python 3.10+** and `pip`.
 
@@ -447,7 +501,7 @@ A green CI result is evidence about the implemented software contract. It is not
 
 ---
 
-## 14. Minimal FieldState example
+## 15. Minimal FieldState example
 
 ```python
 from datetime import datetime, timezone
@@ -471,7 +525,7 @@ The complete software contract is defined in [`docs/FIELD_STATE_CONTRACT.md`](do
 
 ---
 
-## 15. Development principles
+## 16. Development principles
 
 1. **Observation before conclusion.**
 2. **Experimentation before generalization.**
@@ -487,9 +541,9 @@ The complete software contract is defined in [`docs/FIELD_STATE_CONTRACT.md`](do
 
 ---
 
-## 16. Current maturity and next transition
+## 17. Current maturity and next transition
 
-ACRM has progressed beyond idea-only research. The repository contains architectural records, research artifacts, prototypes and demonstrations, an implemented v8.5 contract foundation, executable tests, CI, and formalized evidence boundaries.
+ACRM has progressed beyond idea-only research. The repository contains architectural records, research artifacts, prototypes and demonstrations, an implemented v8.5 contract foundation, executable tests, and a roadmap for controlled layered growth.
 
 The immediate engineering transition is from a deliberately small, validated foundation toward higher-level capabilities without losing architectural discipline.
 
@@ -511,11 +565,11 @@ Longitudinal / empirical evaluation
 Independent review and reproduction
 ```
 
-Known constraints include limited scale and execution capacity, the need for suitable longitudinal data, external validation, reproducibility, and research collaboration. These are explicit development constraints rather than hidden assumptions.
+Known constraints include limited scale and execution capacity, the need for suitable longitudinal data, external validation, reproducibility, and research collaboration. These are explicit development conditions and part of the research roadmap.
 
 ---
 
-## 17. Contributing and critical review
+## 18. Contributing and critical review
 
 Technical discussion, critical review, reproducibility work, and contributions are welcome.
 
@@ -531,11 +585,11 @@ Substantial architectural changes should identify, where applicable:
 - evidence level;
 - and whether the change belongs to core, demo, research artifact, or roadmap.
 
-Critical review is part of the intended development process. The objective is not to eliminate criticism but to make assumptions, boundaries, evidence, and limitations explicit enough to support constructive technical review.
+Critical review is part of the intended development process. The objective is not to eliminate criticism but to make assumptions, boundaries, evidence, and limitations explicit enough to support it.
 
 ---
 
-## 18. Navigation
+## 19. Navigation
 
 | Area | Primary document |
 |---|---|
