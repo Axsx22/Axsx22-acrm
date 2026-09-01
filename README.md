@@ -1,10 +1,12 @@
 # ACRM — Adaptive Cognitive Regulation Module
 
-**An independent, research-oriented architecture for studying observable, evaluable, and governable behavior in LLM-based cognitive systems.**
+**An independent research and engineering project for making observable, evaluable, and governable behavior in LLM-based cognitive systems explicit, inspectable, testable, and reproducible.**
 
 ACRM is designed and developed by **Ali Farahani**, independent AI researcher and system architect, as part of a broader human–LLM collaborative research program.
 
-> **Repository principle:** ACRM did not begin as a fully specified engineering system. Its architecture emerged iteratively through observation, questioning, hypothesis formation, interaction with multiple LLMs, and incremental refinement. The repository therefore contains not only the current implementation but the evidence of that evolution.
+The repository currently contains a concrete **ACRM v8.5 implementation foundation** centered on the immutable `FieldState` contract, together with a tested **Session C evolution implementation checkpoint**, executable unit tests, GitHub Actions CI, technical contracts, architecture records, research artifacts, roadmap documents, demonstrations, and stakeholder reporting.
+
+> **Repository principle:** ACRM emerged iteratively through observation, questioning, hypothesis formation, interaction with multiple LLMs, architectural refinement, implementation, and testing. The repository therefore preserves both the research lineage and the concrete software artifacts that resulted from it.
 
 ---
 
@@ -25,7 +27,7 @@ The research connects several areas:
 - governance and controlled system evolution;
 - human–LLM collaborative system design.
 
-ACRM should therefore be understood as an evolving architectural research program, not as a claim that every concept described in its history is already implemented.
+ACRM is an evolving architectural research program whose repository distinguishes clearly between implemented software, research artifacts, prototypes, demonstrations, and future architectural direction.
 
 ---
 
@@ -37,7 +39,7 @@ ACRM should therefore be understood as an evolving architectural research progra
 
 ### How the architecture emerged
 
-ACRM was not designed top-down from a complete initial specification. It emerged through a long-running empirical and collaborative process in which observations generated questions, questions generated hypotheses, and hypotheses were tested against implementation and experiment.
+ACRM was not designed top-down from a complete initial specification. It emerged through a long-running empirical and collaborative process in which observations generated questions, questions generated hypotheses, and hypotheses were examined through implementation and experiment.
 
 A simplified representation of that process is:
 
@@ -69,7 +71,7 @@ Multiple LLMs participated as analytical collaborators: ideas and interpretation
 
 The early research was conducted independently and under constrained practical conditions, using consumer hardware and extensive direct interaction with LLMs rather than a conventional academic laboratory or research team.
 
-Historical research records are preserved because they explain how architectural questions and decisions emerged. They should not be confused with the current implementation specification.
+Historical research records are preserved because they explain how architectural questions and decisions emerged. They are maintained separately from the current implementation specification.
 
 ---
 
@@ -107,13 +109,13 @@ These stages are related but **not interchangeable**.
 - Empirical evaluation tests broader behavioral or research claims.
 - Independent reproduction provides stronger external evidence.
 
-Accordingly, no dashboard, recording, prototype, architecture diagram, passing test, or historical document should be interpreted as evidence beyond the level it actually supports.
+Accordingly, each repository artifact should be interpreted at the evidence level it actually supports.
 
 ---
 
 ## 4. Current implementation status — ACRM v8.5
 
-The current repository contains a deliberately small, contract-driven v8.5 foundation together with a separately identifiable, tested **Session C evolution prototype**. The Session C implementation extends the repository's executable research surface, but it does not replace the FieldState contract or claim full scientific validation.
+The current repository contains a concrete, contract-driven v8.5 foundation together with a separately identifiable, tested **Session C evolution implementation checkpoint**. Session C extends the repository's executable research surface while preserving the FieldState contract as the canonical low-level observation layer.
 
 The current implementation can be understood as:
 
@@ -171,7 +173,7 @@ The repository also contains an executable Session C implementation with:
 - orchestration through `SessionCEngine`;
 - dedicated unit tests covering the Session C components and boundaries.
 
-Session C is an **engineering implementation checkpoint**, not a claim that the broader ACRM research hypotheses have been scientifically validated.
+Session C is an **engineering implementation checkpoint** within the current repository and is directly inspectable through its source code, contracts, and tests.
 
 The Session C governance layer does not execute generated candidate source and does not itself perform runtime source switching. Candidate testing is represented through an explicit tester boundary; execution of candidate source is not part of the Session C core implementation.
 
@@ -182,13 +184,11 @@ Authoritative current-status documents:
 - [`docs/SESSION_C_IMPLEMENTATION_STATUS.md`](docs/SESSION_C_IMPLEMENTATION_STATUS.md)
 - [`docs/SESSION_C_ARCHITECTURE.md`](docs/SESSION_C_ARCHITECTURE.md)
 
-### What v8.5 does not claim
+### Evidence boundary
 
-The current repository does **not** claim to implement a complete behavioral inference stack, causal-analysis engine, autonomous self-modification system, intervention engine, or scientifically validated empirical results.
+The implemented software and its tests provide evidence about defined software behavior and contracts. They do not by themselves establish the effectiveness of broader research hypotheses, the scientific validity of inferred behavioral mechanisms, or superiority in real-world LLM deployments.
 
-The presence of Session C code and tests demonstrates implementation of defined software behavior. It does not establish the effectiveness of the underlying research hypotheses, the validity of inferred behavioral mechanisms, or the superiority of the architecture in real-world LLM deployments.
-
-Higher-level capabilities such as relation detection, transition analysis, behavioral analysis, governance, and intervention require explicit contracts, implementations, tests, and appropriate evaluation strategies before stronger implementation or scientific claims are made.
+Higher-level capabilities such as relation detection, transition analysis, broader behavioral analysis, expanded governance, and intervention are treated as separate architectural layers requiring their own contracts, implementations, tests, and appropriate evaluation.
 
 ---
 
@@ -242,7 +242,7 @@ Output              │
            ┌─────┴───────────┐
            ↓                 ↓
     Synthesis Flow     Incubation Pool
-           └─────┬───────────┘
+           └─────┬─────┘
                  ↓
            Integrity Gate
             ↙          ↘
@@ -262,7 +262,7 @@ The authoritative research record is:
 
 - [`docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md`](docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md)
 
-Its historical significance should be preserved separately from claims about present implementation.
+Its historical significance is preserved separately from present implementation claims.
 
 ---
 
@@ -270,7 +270,7 @@ Its historical significance should be preserved separately from claims about pre
 
 The repository contains artifacts from different architectural generations. Earlier research should be read as evidence of architectural evolution, not as a second implementation of the current core.
 
-For example, the repository preserves the v7.9 Obstruction Theory review and its identified limitations. This material is valuable for understanding the evolution of the research, but it is not evidence that those limitations have been resolved in the current release.
+For example, the repository preserves the v7.9 Obstruction Theory review and its identified limitations. This material is valuable for understanding the evolution of the research and is linked here as historical architectural evidence.
 
 Relevant records include:
 
@@ -298,18 +298,18 @@ Gated higher-level capabilities
 
 ## 8. Roadmap discipline
 
-For an emergent architecture such as ACRM, the roadmap is not a historical description of what was planned from the beginning. It is the **engineering mechanism for turning an organically developed research program into an explicit, testable, and managed progression**.
+For an emergent architecture such as ACRM, the roadmap is the **engineering mechanism for turning an organically developed research program into an explicit, testable, and managed progression**.
 
-The roadmap must answer:
+The roadmap addresses:
 
-1. Where is the system now?
-2. What is the target architectural state?
-3. Why is the next layer needed?
-4. What prerequisites must exist before it is built?
-5. What contract defines completion?
-6. What tests and evidence are required?
-7. What remains research-only?
-8. What would cause a design to be rejected, revised, or deferred?
+1. Where the system is now.
+2. What the target architectural state is.
+3. Why the next layer is needed.
+4. What prerequisites must exist before it is built.
+5. What contract defines completion.
+6. What tests and evidence are required.
+7. What remains research-only.
+8. What would cause a design to be rejected, revised, or deferred.
 
 The current roadmap treats future layers as gated work rather than assumed capabilities.
 
@@ -331,7 +331,7 @@ Intervention
 
 This is an **architectural direction**, not a statement that all of these components currently exist.
 
-Session C should be understood as a separately identified evolution/governance implementation checkpoint that explores part of this higher-level direction without implying that the complete Relation → Transition → Analysis → Governance → Intervention stack has been implemented.
+Session C is a separately identified evolution/governance implementation checkpoint that explores part of this higher-level direction without implying that the complete Relation → Transition → Analysis → Governance → Intervention stack has been implemented.
 
 Each new layer should establish, before core promotion:
 
@@ -471,19 +471,17 @@ The Markdown update and PowerPoint deck represent the same reporting baseline an
 
 ## 13. Research Continuation, Infrastructure Requirements, and Collaboration Opportunity
 
-ACRM has reached a stage where further progress requires transition from independent architectural research into a larger-scale experimental environment.
+ACRM has reached a stage where further progress can benefit from a larger-scale experimental environment.
 
-The current repository represents a validated engineering foundation and preserves the research lineage, architectural decisions, contracts, tests, and evidence boundaries developed throughout the project evolution.
+The current repository represents a concrete engineering foundation and preserves the research lineage, architectural decisions, contracts, tests, and evidence boundaries developed throughout the project evolution.
 
-The next research phase requires access to additional infrastructure and experimental capacity, including:
+The next research phase can be strengthened through additional infrastructure and experimental capacity, including:
 
 * GPU-based computational resources for larger-scale experiments;
 * API access to multiple frontier AI systems;
 * extended runtime environments for longitudinal evaluation;
 * storage and infrastructure support for long-horizon behavioral analysis;
 * research collaboration and independent review.
-
-This requirement does not represent a request to fund an incomplete or speculative idea.
 
 ACRM is presented as an emerging research architecture that has already progressed through multiple stages:
 
