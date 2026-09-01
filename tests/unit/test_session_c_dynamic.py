@@ -58,15 +58,32 @@ def test_envelope_rejects_invalid_quantile_order():
 
 
 def test_envelope_ignores_non_numeric_and_non_finite_values():
-    valid = obs(0, ObservationKind.PRESSURE, 2.0)
-    text = obs(1, ObservationKind.PRESSURE, 3.0)
-    text.context["load"] = "not-a-number"
-    nan_value = obs(2, ObservationKind.PRESSURE, 4.0)
-    nan_value.context["load"] = float("nan")
-
-    envelope = FieldEnvelopeEstimator().estimate(
-        (valid, text, nan_value), metric_name="load"
+    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    items = (
+        EvolutionObservation(
+            observation_id="valid",
+            kind=ObservationKind.PRESSURE,
+            description="valid",
+            observed_at=base,
+            context={"load": 2.0},
+        ),
+        EvolutionObservation(
+            observation_id="text",
+            kind=ObservationKind.PRESSURE,
+            description="text",
+            observed_at=base + timedelta(minutes=1),
+            context={"load": "not-a-number"},
+        ),
+        EvolutionObservation(
+            observation_id="nan",
+            kind=ObservationKind.PRESSURE,
+            description="nan",
+            observed_at=base + timedelta(minutes=2),
+            context={"load": float("nan")},
+        ),
     )
+
+    envelope = FieldEnvelopeEstimator().estimate(items, metric_name="load")
     assert envelope.sample_count == 1
     assert envelope.baseline == 2.0
     assert envelope.warning_limit == 2.0
