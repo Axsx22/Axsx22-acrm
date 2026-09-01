@@ -220,447 +220,215 @@ Software correctness and scientific validity are separate claims and require sep
 
 ---
 
-## 6. Research architecture: Unconscious Bridge
+## 6. Engineering and Investment Readiness
 
-One of the foundational conceptual artifacts in the ACRM research history is the **Unconscious Bridge Layer**.
+ACRM is being developed as a **research-driven deep-tech software architecture**, not as a conventional feature-level application. The purpose of investment at this stage is therefore not to manufacture a market-ready claim from an unvalidated prototype, but to move a concrete engineering foundation through the next evidence-producing development gates.
 
-The earliest architecture was generated from a conceptual definition of human unconscious processing and subsequently formalized through interaction with the collaborating LLMs. Its purpose in the ACRM design is to model how a cognitive system might handle situations where direct, immediate response proves insufficient or problematic.
+### 6.1 Why the project is investable at this stage
 
-A simplified conceptual flow is:
+The repository provides an inspectable technical base from which additional research and engineering can be executed incrementally:
 
 ```text
-Prompt / Input
-      ↓
-Conscious Stream
-      ↓
-Impasse Detector
-   ↙          ↘
-No Impasse    High Loss / Stuckness
-   ↓                 ↓
-Standard       Unconscious Bridge
-Output              │
-           ┌─────┴───────────┐
-           ↓                 ↓
-    Synthesis Flow     Incubation Pool
-           └─────┬─────┘
-                 ↓
-           Integrity Gate
-            ↙          ↘
-     Coherent/Resolved   Hard Mismatch
-          ↓                   ↓
-Unconscious Output       Rejection /
-                         Clarification
-        \             /
-         └─────┬─────┘
-               ↓
-          Final Output
+Research question
+       ↓
+Explicit architecture
+       ↓
+Software contracts
+       ↓
+Working implementation
+       ↓
+Automated tests
+       ↓
+Reproducible CI
+       ↓
+Controlled experimental infrastructure
+       ↓
+Empirical evidence
+       ↓
+External validation
+       ↓
+Potential product / platform layer
 ```
 
-This architecture is currently a **research concept / architectural artifact**, not an implemented runtime capability of v8.5.
+The investment thesis is therefore **milestone-based**. Capital is intended to purchase increased experimental capability, evaluation depth, infrastructure reliability, and engineering throughput—not to substitute funding for evidence.
 
-The authoritative research record is:
+### 6.2 Current technical evidence
 
-- [`docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md`](docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md)
+The present repository establishes several concrete engineering properties:
 
-Its historical significance is preserved separately from present implementation claims.
+- immutable and validated state representation;
+- explicit separation between observation and interpretation;
+- contract-driven Session C evolution flow;
+- dynamic-envelope and direction-aware readiness mechanisms;
+- candidate generation and testing boundaries;
+- weighted specialist review and deterministic decision handling;
+- explicit non-execution boundary for generated candidate source;
+- unit tests for core contracts and failure conditions;
+- automated CI across Python 3.10–3.13;
+- documented distinction between implementation evidence and scientific evidence.
 
----
+These are **software-engineering claims supported by repository artifacts and tests**. They should not be confused with claims that ACRM has already demonstrated a general solution to autonomous cognition, behavioral regulation, or scientific hypotheses about LLMs.
 
-## 7. Evolution of the architecture
+### 6.3 Technical differentiation
 
-The repository contains artifacts from different architectural generations. Earlier research should be read as evidence of architectural evolution, not as a second implementation of the current core.
+The intended differentiation is architectural rather than dependent on a single model provider or model checkpoint.
 
-For example, the repository preserves the v7.9 Obstruction Theory review and its identified limitations. This material is valuable for understanding the evolution of the research and is linked here as historical architectural evidence.
+ACRM is designed around an external, modular layer that can observe and evaluate evolving LLM-system state without requiring modification of model weights. Its architecture emphasizes:
 
-Relevant records include:
+1. **Observability before intervention** — measurement is separated from action.
+2. **Evidence boundaries** — implementation, testing, demonstration, and scientific validation are explicitly distinguished.
+3. **Temporal reasoning** — state is evaluated as trajectories rather than isolated snapshots.
+4. **Dynamic envelopes** — readiness is relative to observed system history rather than fixed universal thresholds.
+5. **Controlled evolution** — candidate generation, testing, review, and decision are separate gates.
+6. **Non-invasive integration** — the governance layer is designed as an external architectural layer rather than a modification of transformer weights.
+7. **Model independence** — the architecture is intended to remain meaningful across different underlying LLM implementations.
 
-- [`docs/research/ACRM_v7_9_OBSTRUCTION_THEORY_STATUS.md`](docs/research/ACRM_v7_9_OBSTRUCTION_THEORY_STATUS.md)
-- [`docs/ARCHITECTURE_REVIEW_V7_9.md`](docs/ARCHITECTURE_REVIEW_V7_9.md)
-- [`docs/roadmap/ACRM_v2.0_technical_roadmap.md`](docs/roadmap/ACRM_v2.0_technical_roadmap.md)
+The repository does not claim that these properties are already a defensible commercial moat. Their potential defensibility must be established through implementation depth, empirical results, integration know-how, evaluation datasets, reproducible benchmarks, and eventual external adoption.
 
-The architectural direction is therefore evolutionary:
+### 6.4 What additional capital is intended to unlock
+
+Future investment should be tied to measurable technical milestones rather than open-ended development. Priority workstreams are:
+
+| Workstream | Near-term objective | Evidence produced |
+|---|---|---|
+| Empirical evaluation | Execute controlled experiments across representative LLM configurations | Reproducible experiment results |
+| Calibration | Estimate and validate dynamic-envelope parameters on real datasets | Calibration reports and benchmark results |
+| Behavioral analysis | Implement and test relation/transition analysis as separate contracts | New unit/integration tests and evaluation datasets |
+| Long-running runtime | Validate state persistence and temporal behavior over extended operation | Runtime logs, failure analysis, endurance results |
+| Reproducibility | Package experiments so independent researchers can rerun them | Reproducibility bundle |
+| Benchmarking | Compare ACRM-enabled and baseline configurations under defined protocols | Comparative metrics and statistical analysis |
+| Engineering hardening | Improve observability, fault isolation, versioning, and deployment interfaces | Release-grade artifacts |
+
+### 6.5 Milestone logic
+
+A proposed funding program should be evaluated through gates such as:
 
 ```text
-Research history
-      ↓
-Architectural hypotheses
-      ↓
-Review / boundary clarification
-      ↓
-Explicit contracts
-      ↓
-Small validated core
-      ↓
-Gated higher-level capabilities
+Gate 0 — Existing foundation
+Contracts + implementation + tests + CI
+
+Gate 1 — Experimental readiness
+Controlled datasets + experiment harness + instrumentation
+
+Gate 2 — Empirical signal
+Repeatable behavioral measurements above predefined baselines
+
+Gate 3 — Cross-model robustness
+Replication across multiple model families/configurations
+
+Gate 4 — Independent reproducibility
+External researcher or engineering team reproduces material findings
+
+Gate 5 — Productization decision
+Evidence sufficient to justify a production/platform investment
 ```
 
----
+Failure at an empirical gate is itself a valid research outcome. Funding should therefore be understood as purchasing **information and validated engineering capability**, not a guaranteed scientific conclusion.
 
-## 8. Roadmap discipline
+### 6.6 Principal technical risks
 
-For an emergent architecture such as ACRM, the roadmap is the **engineering mechanism for turning an organically developed research program into an explicit, testable, and managed progression**.
+A technically credible investment case must acknowledge the main uncertainties:
 
-The roadmap addresses:
+- observed behavioral patterns may not generalize across models;
+- dynamic thresholds may require substantial calibration and may vary by task or deployment;
+- long-running systems can accumulate state and failure modes not visible in short experiments;
+- correlation and temporal succession may be mistaken for causal structure unless explicitly controlled;
+- candidate generation does not imply candidate usefulness or safe deployment;
+- external observability may have limited access to latent/internal model processes;
+- engineering complexity may increase substantially when moving from checkpoint implementations to production-scale runtime infrastructure.
 
-1. Where the system is now.
-2. What the target architectural state is.
-3. Why the next layer is needed.
-4. What prerequisites must exist before it is built.
-5. What contract defines completion.
-6. What tests and evidence are required.
-7. What remains research-only.
-8. What would cause a design to be rejected, revised, or deferred.
+These risks are not hidden by the architecture. They define the experimental program required to reduce uncertainty.
 
-The current roadmap treats future layers as gated work rather than assumed capabilities.
+### 6.7 Commercialization path
 
-A useful high-level direction is:
-
-```text
-FieldState
-    ↓
-Relation
-    ↓
-Transition
-    ↓
-Analysis
-    ↓
-Governance
-    ↓
-Intervention
-```
-
-This is an **architectural direction**, not a statement that all of these components currently exist.
-
-Session C is a separately identified evolution/governance implementation checkpoint that explores part of this higher-level direction without implying that the complete Relation → Transition → Analysis → Governance → Intervention stack has been implemented.
-
-Each new layer should establish, before core promotion:
+ACRM's potential commercialization should be treated as a staged hypothesis rather than an established market fact:
 
 ```text
-Responsibility
-     ↓
-Interface / Contract
-     ↓
-Assumptions & Invariants
-     ↓
-Failure Modes
-     ↓
-Implementation
-     ↓
-Tests
-     ↓
-Evaluation
-     ↓
-Evidence-based promotion
-```
-
----
-
-## 9. Research archive, prototypes, and demonstrations
-
-The broader research history includes dashboards, recordings, executable prototypes, experiments, and architectural demonstrations covering topics such as:
-
-- interaction-field visualization;
-- behavioral runtime state;
-- temporal state and trajectory observation;
-- calibration and invariant testing;
-- failure-mode taxonomies;
-- quality-control and consensus concepts;
-- observability and system-state visualization.
-
-These artifacts are retained because they preserve architectural experiments and the path by which concepts evolved.
-
-They are **not automatically part of the current runtime**.
-
-See:
-
-- [`docs/DEMO_CATALOG.md`](docs/DEMO_CATALOG.md)
-- [`docs/demos/README.md`](docs/demos/README.md)
-
-### Evidence rule
-
-A dashboard may contain sophisticated UI, simulated values, browser-side algorithms, or apparent runtime behavior. That is evidence of a prototype or demonstration—not automatically evidence of a validated or implemented capability.
-
-Historical and demo provenance is deliberately preserved rather than erased, but it is kept separate from implementation claims.
-
----
-
-## 10. Repository architecture
-
-The repository currently contains the following principal layers:
-
-```text
-.github/workflows/
-    CI automation
-
-acrm_core/
-    Implemented v8.5 runtime foundation
-    ├── field/
-    │   └── state.py
-    ├── evolution/
-    │   └── session_c.py
-    └── session_c/
-        ├── dynamic.py
-        ├── observation.py
-        ├── orchestrator.py
-        └── topic.py
-
-tests/
-    Executable software-contract tests
-    └── unit/
-        ├── test_field_state.py
-        ├── test_session_c.py
-        ├── test_session_c_dynamic.py
-        ├── test_session_c_orchestrator.py
-        └── test_session_c_observation_boundary.py
-
-docs/
-    Technical contracts, implementation status,
-    research records, roadmap, demos, governance,
-    testing, and stakeholder reporting
-```
-
-The implementation remains intentionally bounded. `FieldState` is the canonical low-level state contract, while Session C is an explicitly identified higher-level engineering checkpoint with its own observation, analysis, orchestration, and governance boundaries.
-
-The documentation structure separates implementation status, research, roadmap, testing, demos, and stakeholder reporting so that different evidence classes remain identifiable.
-
----
-
-## 11. Engineering governance
-
-ACRM follows an evidence-first engineering discipline.
-
-A proposed capability should not enter the core merely because it appears in a research document, prototype, dashboard, diagram, or roadmap.
-
-Before promotion, the capability should have:
-
-- a clearly defined responsibility;
-- explicit inputs and outputs;
-- documented assumptions and invariants;
-- identifiable failure modes;
-- a testable contract;
-- an implementation;
-- executable tests;
-- and an appropriate evaluation strategy.
-
-See [`docs/ENGINEERING_GOVERNANCE.md`](docs/ENGINEERING_GOVERNANCE.md) and [`docs/testing/EPISTEMIC_INVARIANTS.md`](docs/testing/EPISTEMIC_INVARIANTS.md).
-
-### Core principle
-
-> **Complexity should be promoted only when its boundaries and evidence are strong enough to support it.**
-
----
-
-## 12. Stakeholder reporting
-
-The repository maintains an official, dated stakeholder-reporting record for executive and steering-committee communication.
-
-**Current reporting period:** 23–30 Aug 2026  
-**Current reported status:** 🟢 **GREEN**
-
-Current reporting artifacts:
-
-- [`docs/STAKEHOLDER_UPDATE_2026-08-30.md`](docs/STAKEHOLDER_UPDATE_2026-08-30.md) — source-of-record written update;
-- [`docs/ACRM_Executive_Update_2026-08-30.pptx`](docs/ACRM_Executive_Update_2026-08-30.pptx) — one-slide executive presentation;
-- [`docs/STAKEHOLDER_REPORTING.md`](docs/STAKEHOLDER_REPORTING.md) — reporting policy.
-
-Stakeholder reporting communicates project status; it does not establish technical or scientific validity. Claims must remain proportional to the evidence in the repository.
-
-The Markdown update and PowerPoint deck represent the same reporting baseline and should remain synchronized when status changes.
-
----
-
-## 13. Research Continuation, Infrastructure Requirements, and Collaboration Opportunity
-
-ACRM has reached a stage where further progress can benefit from a larger-scale experimental environment.
-
-The current repository represents a concrete engineering foundation and preserves the research lineage, architectural decisions, contracts, tests, and evidence boundaries developed throughout the project evolution.
-
-The next research phase can be strengthened through additional infrastructure and experimental capacity, including:
-
-* GPU-based computational resources for larger-scale experiments;
-* API access to multiple frontier AI systems;
-* extended runtime environments for longitudinal evaluation;
-* storage and infrastructure support for long-horizon behavioral analysis;
-* research collaboration and independent review.
-
-ACRM is presented as an emerging research architecture that has already progressed through multiple stages:
-
-```text
-Independent observation
+Research infrastructure
         ↓
-Research hypotheses
+Evaluation / observability tooling
         ↓
-Architectural development
+Governance interfaces for long-running LLM systems
         ↓
-Prototype experimentation
+Enterprise reliability / audit layer
         ↓
-Engineering contracts
-        ↓
-Validated software foundation
-        ↓
-Next-stage empirical research
+Potential platform or licensing model
 ```
 
-The current objective is to establish collaboration with researchers, engineering teams, AI infrastructure organizations, and potential strategic partners interested in exploring:
+Possible future value propositions include runtime observability, behavioral evaluation, governance instrumentation, controlled system evolution, auditability, and research infrastructure for long-running AI agents. Market demand, pricing, customer segment, and product-market fit require separate validation.
 
-* long-horizon LLM behavior;
-* runtime behavioral stability;
-* trajectory-level governance;
-* AI system observability;
-* human–AI collaborative research methodologies.
+### 6.8 Intellectual-property and open-source position
 
-Potential collaboration models may include:
+The current open repository is intentionally evidence-oriented. Public code demonstrates architectural credibility and reproducibility. Potential future defensibility may instead emerge from the combination of:
 
-* research partnership;
-* technical review and evaluation;
-* infrastructure sponsorship;
-* investment for experimental scaling;
-* joint development of future ACRM generations.
+- proprietary evaluation datasets and protocols;
+- validated calibration methods;
+- implementation and deployment know-how;
+- specialized integrations;
+- accumulated longitudinal behavioral data;
+- benchmark methodology;
+- production reliability engineering;
+- and, where appropriate and legally supportable, patentable implementation details.
 
-The long-term direction of ACRM is not to replace existing LLM architectures, but to investigate whether additional behavioral regulation and observability layers can improve the reliability, coherence, and governance of complex AI systems operating over extended periods.
+No claim of patent protection or proprietary moat is made by this repository unless separately documented.
 
----
+### 6.9 Investment principle
 
-## 14. Installation and tests
+> **ACRM does not ask an investor to fund a conclusion. It asks an investor to fund the controlled engineering and empirical process required to determine whether the architecture's hypotheses survive rigorous testing.**
 
-Requirements: **Python 3.10+** and `pip`.
+This distinction is central to the project's credibility.
 
-Install the project with test dependencies:
-
-```bash
-python -m pip install -e ".[test]"
-```
-
-Run the test suite:
-
-```bash
-python -m pytest -q
-```
-
-The current repository test suite contains **38 unit tests** covering the `FieldState` contract and the implemented Session C components and boundaries.
-
-The current test distribution is:
-
-- `test_field_state.py`: 15 tests;
-- `test_session_c.py`: 12 tests;
-- `test_session_c_dynamic.py`: 5 tests;
-- `test_session_c_orchestrator.py`: 2 tests;
-- `test_session_c_observation_boundary.py`: 4 tests.
-
-CI runs the project contract across Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests targeting `main` or `develop`.
-
-A green CI result is evidence about the implemented software contracts. It is not, by itself, evidence that the broader ACRM research hypotheses are scientifically validated.
+The objective of the next funding stage is to transform an already inspectable software foundation into a body of reproducible empirical evidence strong enough to support a subsequent technical, scientific, or commercial decision.
 
 ---
 
-## 15. Minimal FieldState example
+## 7. Current implementation boundaries
 
-```python
-from datetime import datetime, timezone
-from acrm_core.field.state import FieldState
+ACRM does **not** currently claim:
 
-state = FieldState(
-    field_id="field-1",
-    session_id="session-1",
-    sequence=0,
-    timestamp=datetime.now(timezone.utc),
-    metrics={"score": 1.0},
-    failure_modes=("none",),
-    governance_confidence=0.5,
-)
+- a general behavioral inference engine;
+- a complete causal analysis engine;
+- scientifically validated dynamic thresholds;
+- autonomous runtime governance across arbitrary LLM deployments;
+- automatic production deployment of generated code;
+- scientific validation of the broader ACRM research hypotheses;
+- or product-market fit.
 
-state.metric("score")
-state.has_failure_mode("none")
-```
-
-The complete software contract is defined in [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md).
+These are explicit future or validation targets rather than implied capabilities.
 
 ---
 
-## 16. Development principles
+## 8. Repository evidence and reproducibility
 
-1. **Observation before conclusion.**
-2. **Experimentation before generalization.**
-3. **Contracts before complexity.**
-4. **Architectures should be implementable.**
-5. **Systems should be observable.**
-6. **Implementation evidence is not scientific validation.**
-7. **Keep recording, relation detection, transition analysis, governance, and intervention separated until their contracts justify integration.**
-8. **Preserve research history and prototype provenance.**
-9. **Prefer explicit, deterministic, reviewable behavior.**
-10. **Make claims proportional to available evidence.**
-11. **Do not allow historical or conceptual artifacts to silently become implementation claims.**
+The repository maintains an evidence-oriented structure so that technical reviewers can inspect the relationship between claims, implementation, tests, and research status.
 
----
+Relevant documents include:
 
-## 17. Current maturity and next transition
+- `docs/IMPLEMENTATION_GAP_MATRIX.md`
+- `docs/ENGINEERING_GOVERNANCE.md`
+- `docs/testing/EPISTEMIC_INVARIANTS.md`
+- `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`
+- `docs/SESSION_C_IMPLEMENTATION_STATUS.md`
+- `docs/SESSION_C_ARCHITECTURE.md`
+- `docs/FIELD_STATE_CONTRACT.md`
 
-ACRM has progressed beyond idea-only research. The repository contains architectural records, research artifacts, prototypes and demonstrations, an implemented v8.5 contract foundation, an executable Session C engineering checkpoint, executable tests, and a roadmap for controlled layered growth.
-
-The immediate engineering transition is from a deliberately bounded foundation toward broader empirical evaluation and further higher-level capabilities without losing architectural discipline.
-
-The intended progression is:
-
-```text
-Current validated engineering foundation
-          ↓
-Architectural stabilization
-          ↓
-Explicit next-layer contracts
-          ↓
-Controlled implementation
-          ↓
-Regression testing
-          ↓
-Longitudinal / empirical evaluation
-          ↓
-Independent review and reproduction
-```
-
-Known constraints include limited scale and execution capacity, the need for suitable longitudinal data, external validation, reproducibility, and research collaboration. These are explicit development conditions and part of the research roadmap.
+The project deliberately distinguishes **implemented**, **tested**, **demonstrated**, **specified**, and **validated** states. This distinction is part of the engineering governance model, not merely documentation style.
 
 ---
 
-## 18. Contributing and critical review
+## 9. Roadmap
 
-Technical discussion, critical review, reproducibility work, and contributions are welcome.
+The next stage is not to maximize feature count. It is to maximize **evidence quality per engineering effort**.
 
-Substantial architectural changes should identify, where applicable:
+Priority sequence:
 
-- the problem being addressed;
-- component responsibility;
-- inputs and outputs;
-- assumptions and invariants;
-- failure modes;
-- tests;
-- evaluation strategy;
-- evidence level;
-- and whether the change belongs to core, demo, research artifact, or roadmap.
+1. empirical evaluation infrastructure;
+2. calibration studies;
+3. controlled multi-model experiments;
+4. long-running runtime validation;
+5. relation and transition contracts;
+6. reproducibility package;
+7. independent evaluation;
+8. production-oriented architecture only after evidence justifies it.
 
-Critical review is part of the intended development process. The objective is not to eliminate criticism but to make assumptions, boundaries, evidence, and limitations explicit enough to support it.
-
----
-
-## 19. Navigation
-
-| Area | Primary document |
-|---|---|
-| Current implementation | [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md) |
-| Core contract | [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) |
-| Session C architecture | [`docs/SESSION_C_ARCHITECTURE.md`](docs/SESSION_C_ARCHITECTURE.md) |
-| Session C implementation status | [`docs/SESSION_C_IMPLEMENTATION_STATUS.md`](docs/SESSION_C_IMPLEMENTATION_STATUS.md) |
-| Foundational research architecture | [`docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md`](docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md) |
-| Historical architecture review | [`docs/ARCHITECTURE_REVIEW_V7_9.md`](docs/ARCHITECTURE_REVIEW_V7_9.md) |
-| Roadmap | [`docs/roadmap/ACRM_v2.0_technical_roadmap.md`](docs/roadmap/ACRM_v2.0_technical_roadmap.md) |
-| Engineering governance | [`docs/ENGINEERING_GOVERNANCE.md`](docs/ENGINEERING_GOVERNANCE.md) |
-| Epistemic invariants | [`docs/testing/EPISTEMIC_INVARIANTS.md`](docs/testing/EPISTEMIC_INVARIANTS.md) |
-| Demo inventory | [`docs/DEMO_CATALOG.md`](docs/DEMO_CATALOG.md) |
-| Demo archive policy | [`docs/demos/README.md`](docs/demos/README.md) |
-| Stakeholder reporting | [`docs/STAKEHOLDER_REPORTING.md`](docs/STAKEHOLDER_REPORTING.md) |
-| Current stakeholder update | [`docs/STAKEHOLDER_UPDATE_2026-08-30.md`](docs/STAKEHOLDER_UPDATE_2026-08-30.md) |
-
----
-
-## License
-
-See `LICENSE` for licensing information.
+This ordering is intentional: **evidence precedes scale, and validation precedes commercialization claims.**
