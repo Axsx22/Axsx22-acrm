@@ -56,12 +56,13 @@ def test_engine_propagates_low_signal_direction():
     engine = SessionCEngine(
         observations=items,
         metric_name="load",
-        current_value=2.0,
+        current_value=1.8,
         direction="low",
         generator=generator,
         tester=candidate_tester,
         vote_provider=votes,
     )
     analysis = engine.analyze()
+    assert analysis.envelope.direction == "low"
     assert analysis.readiness.state == "WARNING"
     assert analysis.readiness.ready is True
