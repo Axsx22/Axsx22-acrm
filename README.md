@@ -113,7 +113,9 @@ Accordingly, no dashboard, recording, prototype, architecture diagram, passing t
 
 ## 4. Current implementation status — ACRM v8.5
 
-The current repository deliberately keeps the implemented v8.5 core small and contract-driven.
+The current repository contains a deliberately small, contract-driven v8.5 foundation together with a separately identifiable, tested **Session C evolution prototype**. The Session C implementation extends the repository's executable research surface, but it does not replace the FieldState contract or claim full scientific validation.
+
+The current implementation can be understood as:
 
 ```text
 Recorded / supplied state
@@ -122,12 +124,22 @@ Recorded / supplied state
       FieldState
           │
           ▼
- Future higher-level layers
+  Session C observation
+          │
+          ├── trajectory / dynamic analysis
+          ├── topic inference
+          ├── evolution readiness
+          ├── candidate generation
+          ├── test gate
+          └── weighted specialist review
+                     │
+                     ▼
+              evolution decision
 ```
 
-`FieldState` is the current implemented boundary object for a recorded observation. It validates and preserves supplied state; it does not interpret that state.
+### Implemented in the current v8.5 repository
 
-### Implemented in v8.5
+#### FieldState foundation
 
 - immutable `FieldState` snapshots;
 - non-empty `field_id` and `session_id` validation;
@@ -143,16 +155,40 @@ Recorded / supplied state
 - Python packaging;
 - automated GitHub Actions CI across Python 3.10–3.13.
 
+#### Session C implementation checkpoint
+
+The repository also contains an executable Session C implementation with:
+
+- immutable observation records and an observation boundary;
+- observation-log handling;
+- trajectory profiling and dynamic-envelope estimation;
+- threshold-approach and evolution-readiness evaluation;
+- topic inference from observed context;
+- evolution candidate representation and generation;
+- explicit generation and test gates;
+- weighted specialist review;
+- deterministic evolution decisions including retain, reject, and switch-recommended outcomes;
+- orchestration through `SessionCEngine`;
+- dedicated unit tests covering the Session C components and boundaries.
+
+Session C is an **engineering implementation checkpoint**, not a claim that the broader ACRM research hypotheses have been scientifically validated.
+
+The Session C governance layer does not execute generated candidate source and does not itself perform runtime source switching. Candidate testing is represented through an explicit tester boundary; execution of candidate source is not part of the Session C core implementation.
+
 Authoritative current-status documents:
 
 - [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md)
 - [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md)
+- [`docs/SESSION_C_IMPLEMENTATION_STATUS.md`](docs/SESSION_C_IMPLEMENTATION_STATUS.md)
+- [`docs/SESSION_C_ARCHITECTURE.md`](docs/SESSION_C_ARCHITECTURE.md)
 
 ### What v8.5 does not claim
 
-The current core does **not** claim to implement a complete behavioral inference stack, causal-analysis engine, autonomous governance controller, intervention engine, or scientifically validated empirical results.
+The current repository does **not** claim to implement a complete behavioral inference stack, causal-analysis engine, autonomous self-modification system, intervention engine, or scientifically validated empirical results.
 
-Potential higher-level capabilities such as relation detection, transition analysis, behavioral analysis, governance, and intervention require their own explicit contracts, implementations, tests, and evaluation strategies.
+The presence of Session C code and tests demonstrates implementation of defined software behavior. It does not establish the effectiveness of the underlying research hypotheses, the validity of inferred behavioral mechanisms, or the superiority of the architecture in real-world LLM deployments.
+
+Higher-level capabilities such as relation detection, transition analysis, behavioral analysis, governance, and intervention require explicit contracts, implementations, tests, and appropriate evaluation strategies before stronger implementation or scientific claims are made.
 
 ---
 
@@ -171,6 +207,8 @@ A core engineering principle is the separation of **recorded state** from **inte
 - which behavioral pattern should be inferred;
 - which decision should be made;
 - or which intervention should be performed.
+
+The Session C observation boundary preserves the same distinction at the next layer: observations are recorded before higher-level trajectory, topic, readiness, or evolution decisions are derived from them.
 
 This boundary prevents higher-level hypotheses from silently becoming low-level data-model assumptions.
 
@@ -293,6 +331,8 @@ Intervention
 
 This is an **architectural direction**, not a statement that all of these components currently exist.
 
+Session C should be understood as a separately identified evolution/governance implementation checkpoint that explores part of this higher-level direction without implying that the complete Relation → Transition → Analysis → Governance → Intervention stack has been implemented.
+
 Each new layer should establish, before core promotion:
 
 ```text
@@ -354,26 +394,32 @@ The repository currently contains the following principal layers:
 
 acrm_core/
     Implemented v8.5 runtime foundation
+    ├── field/
+    │   └── state.py
+    ├── evolution/
+    │   └── session_c.py
+    └── session_c/
+        ├── dynamic.py
+        ├── observation.py
+        ├── orchestrator.py
+        └── topic.py
 
- tests/
+tests/
     Executable software-contract tests
+    └── unit/
+        ├── test_field_state.py
+        ├── test_session_c.py
+        ├── test_session_c_dynamic.py
+        ├── test_session_c_orchestrator.py
+        └── test_session_c_observation_boundary.py
 
- docs/
-    Technical contracts, status, governance,
-    research records, roadmap, demos, reporting
+docs/
+    Technical contracts, implementation status,
+    research records, roadmap, demos, governance,
+    testing, and stakeholder reporting
 ```
 
-The current implementation footprint is intentionally narrow:
-
-```text
-acrm_core/
-└── field/
-    └── state.py
-
- tests/
-└── unit/
-    └── test_field_state.py
-```
+The implementation remains intentionally bounded. `FieldState` is the canonical low-level state contract, while Session C is an explicitly identified higher-level engineering checkpoint with its own observation, analysis, orchestration, and governance boundaries.
 
 The documentation structure separates implementation status, research, roadmap, testing, demos, and stakeholder reporting so that different evidence classes remain identifiable.
 
@@ -493,11 +539,19 @@ Run the test suite:
 python -m pytest -q
 ```
 
-The current v8.5 test suite contains **15 contract-focused tests** for `FieldState`.
+The current repository test suite contains **38 unit tests** covering the `FieldState` contract and the implemented Session C components and boundaries.
+
+The current test distribution is:
+
+- `test_field_state.py`: 15 tests;
+- `test_session_c.py`: 12 tests;
+- `test_session_c_dynamic.py`: 5 tests;
+- `test_session_c_orchestrator.py`: 2 tests;
+- `test_session_c_observation_boundary.py`: 4 tests.
 
 CI runs the project contract across Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests targeting `main` or `develop`.
 
-A green CI result is evidence about the implemented software contract. It is not, by itself, evidence that the broader ACRM research hypotheses are scientifically validated.
+A green CI result is evidence about the implemented software contracts. It is not, by itself, evidence that the broader ACRM research hypotheses are scientifically validated.
 
 ---
 
@@ -543,14 +597,14 @@ The complete software contract is defined in [`docs/FIELD_STATE_CONTRACT.md`](do
 
 ## 17. Current maturity and next transition
 
-ACRM has progressed beyond idea-only research. The repository contains architectural records, research artifacts, prototypes and demonstrations, an implemented v8.5 contract foundation, executable tests, and a roadmap for controlled layered growth.
+ACRM has progressed beyond idea-only research. The repository contains architectural records, research artifacts, prototypes and demonstrations, an implemented v8.5 contract foundation, an executable Session C engineering checkpoint, executable tests, and a roadmap for controlled layered growth.
 
-The immediate engineering transition is from a deliberately small, validated foundation toward higher-level capabilities without losing architectural discipline.
+The immediate engineering transition is from a deliberately bounded foundation toward broader empirical evaluation and further higher-level capabilities without losing architectural discipline.
 
 The intended progression is:
 
 ```text
-Current validated foundation
+Current validated engineering foundation
           ↓
 Architectural stabilization
           ↓
@@ -595,6 +649,8 @@ Critical review is part of the intended development process. The objective is no
 |---|---|
 | Current implementation | [`docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`](docs/ACRM_v8_5_DEVELOPMENT_STATUS.md) |
 | Core contract | [`docs/FIELD_STATE_CONTRACT.md`](docs/FIELD_STATE_CONTRACT.md) |
+| Session C architecture | [`docs/SESSION_C_ARCHITECTURE.md`](docs/SESSION_C_ARCHITECTURE.md) |
+| Session C implementation status | [`docs/SESSION_C_IMPLEMENTATION_STATUS.md`](docs/SESSION_C_IMPLEMENTATION_STATUS.md) |
 | Foundational research architecture | [`docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md`](docs/research/ACRM_FOUNDATIONAL_UNCONSCIOUS_BRIDGE_ARCHITECTURE.md) |
 | Historical architecture review | [`docs/ARCHITECTURE_REVIEW_V7_9.md`](docs/ARCHITECTURE_REVIEW_V7_9.md) |
 | Roadmap | [`docs/roadmap/ACRM_v2.0_technical_roadmap.md`](docs/roadmap/ACRM_v2.0_technical_roadmap.md) |
