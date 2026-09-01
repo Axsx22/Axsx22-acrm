@@ -18,6 +18,7 @@ from acrm_core.session_c.dynamic import (
     DynamicReadinessEvaluator,
     EvolutionReadiness,
     FieldEnvelopeEstimator,
+    SignalDirection,
 )
 from acrm_core.session_c.topic import FieldDrivenTopicEngine, TopicProfile
 
@@ -42,6 +43,7 @@ class SessionCEngine:
         persistence_floor: float = 0.5,
         warning_quantile: float = 0.90,
         critical_quantile: float = 0.975,
+        direction: SignalDirection = "high",
         tolerance: EvolutionTolerance | None = None,
         generator,
         tester,
@@ -54,6 +56,7 @@ class SessionCEngine:
         self.persistence_floor = persistence_floor
         self.warning_quantile = warning_quantile
         self.critical_quantile = critical_quantile
+        self.direction = direction
         self._governance = EvolutionSessionC(
             tolerance=tolerance,
             generator=generator,
@@ -74,6 +77,7 @@ class SessionCEngine:
             current_value=self.current_value,
             min_observations=self.min_observations,
             persistence_floor=self.persistence_floor,
+            direction=self.direction,
         )
         topic = FieldDrivenTopicEngine().infer(self.observations)
         return SessionCAnalysis(readiness, topic, envelope)
@@ -117,6 +121,7 @@ class SessionCEngine:
                     "metric": analysis.envelope.metric_name,
                     "warning_limit": analysis.envelope.warning_limit,
                     "critical_limit": analysis.envelope.critical_limit,
+                    "signal_direction": self.direction,
                 },
             )
         )
