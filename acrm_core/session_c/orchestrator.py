@@ -70,6 +70,7 @@ class SessionCEngine:
             metric_name=self.metric_name,
             warning_quantile=self.warning_quantile,
             critical_quantile=self.critical_quantile,
+            direction=self.direction,
         )
         readiness = DynamicReadinessEvaluator().evaluate(
             self.observations,
