@@ -40,10 +40,13 @@ class DynamicEnvelope:
     warning_limit: float
     critical_limit: float
     sample_count: int
+    direction: SignalDirection = "high"
 
     def __post_init__(self) -> None:
         if not isinstance(self.metric_name, str) or not self.metric_name.strip():
             raise ValueError("metric_name must be non-empty")
+        if self.direction not in {"high", "low"}:
+            raise ValueError("direction must be 'high' or 'low'")
         if not all(
             isfinite(float(value))
             for value in (self.baseline, self.warning_limit, self.critical_limit)
@@ -51,8 +54,10 @@ class DynamicEnvelope:
             raise ValueError("envelope values must be finite")
         if self.sample_count < 1:
             raise ValueError("sample_count must be >= 1")
-        if self.warning_limit > self.critical_limit:
-            raise ValueError("warning_limit cannot exceed critical_limit")
+        if self.direction == "high" and self.warning_limit > self.critical_limit:
+            raise ValueError("warning_limit cannot exceed critical_limit for high direction")
+        if self.direction == "low" and self.warning_limit < self.critical_limit:
+            raise ValueError("warning_limit cannot be below critical_limit for low direction")
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,11 +121,14 @@ class FieldEnvelopeEstimator:
         metric_name: str,
         warning_quantile: float = 0.90,
         critical_quantile: float = 0.975,
+        direction: SignalDirection = "high",
     ) -> DynamicEnvelope:
         if not 0.0 < warning_quantile <= critical_quantile <= 1.0:
             raise ValueError(
                 "quantiles must satisfy 0 < warning <= critical <= 1"
             )
+        if direction not in {"high", "low"}:
+            raise ValueError("direction must be 'high' or 'low'")
 
         values: list[float] = []
         for observation in observations:
@@ -137,12 +145,20 @@ class FieldEnvelopeEstimator:
             )
 
         ordered = sorted(values)
+        if direction == "high":
+            warning_limit = self._quantile(ordered, warning_quantile)
+            critical_limit = self._quantile(ordered, critical_quantile)
+        else:
+            warning_limit = self._quantile(ordered, 1.0 - warning_quantile)
+            critical_limit = self._quantile(ordered, 1.0 - critical_quantile)
+
         return DynamicEnvelope(
             metric_name=metric_name,
             baseline=median(ordered),
-            warning_limit=self._quantile(ordered, warning_quantile),
-            critical_limit=self._quantile(ordered, critical_quantile),
+            warning_limit=warning_limit,
+            critical_limit=critical_limit,
             sample_count=len(ordered),
+            direction=direction,
         )
 
     @staticmethod
@@ -158,7 +174,7 @@ class FieldEnvelopeEstimator:
 
 
 class DynamicReadinessEvaluator:
-    """Evaluate readiness relative to a configurable signal direction."""
+    """Evaluate readiness relative to the envelope's signal direction."""
 
     def evaluate(
         self,
@@ -168,21 +184,24 @@ class DynamicReadinessEvaluator:
         current_value: float,
         min_observations: int = 3,
         persistence_floor: float = 0.5,
-        direction: SignalDirection = "high",
+        direction: SignalDirection | None = None,
     ) -> EvolutionReadiness:
         if min_observations < 1:
             raise ValueError("min_observations must be >= 1")
         if not 0.0 <= persistence_floor <= 1.0:
             raise ValueError("persistence_floor must be between 0 and 1")
-        if direction not in {"high", "low"}:
+        if direction is not None and direction not in {"high", "low"}:
             raise ValueError("direction must be 'high' or 'low'")
+        if direction is not None and direction != envelope.direction:
+            raise ValueError("direction must match envelope.direction")
 
+        effective_direction = envelope.direction if direction is None else direction
         profile = TrajectoryAnalyzer().profile(observations)
         value = float(current_value)
         if not isfinite(value):
             raise ValueError("current_value must be finite")
 
-        if direction == "high":
+        if effective_direction == "high":
             state = (
                 "CRITICAL"
                 if value >= envelope.critical_limit
