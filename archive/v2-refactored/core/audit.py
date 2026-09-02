@@ -3,7 +3,7 @@ Audit Scorer — Refactored v2.0
 Contract: metrics are deterministic and reproducible.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 def clamp(x: float, min_v: float = 0.0, max_v: float = 1.0) -> float:
@@ -45,7 +45,7 @@ class AuditScorer:
                 return i - recovery_start
         return None
 
-    def contamination_containment_ratio(self, clean_logs: List[Dict], 
+    def contamination_containment_ratio(self, clean_logs: List[Dict],
                                         burst_logs: List[Dict]) -> float:
         """How well did system contain burst contamination?"""
         if not clean_logs or not burst_logs:
