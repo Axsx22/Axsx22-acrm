@@ -1,0 +1,19 @@
+ACRM historical source inventory captured before archive transfer
+
+SHA-256  SIZE  FILE
+82a553d19ba9657f1b217410f32aa5c9a8ec2edaa9f1ac34793e856aa88ec816  50204  AliFarahaniCognitiveModel_v2_1.py
+76bb8f1ce9485368b7bffd52268ac3a3fec8ddf66930ca09aabd17aa2eb9f5ff  17367  Index.html
+6d08c23a6a9778bb8e2f3ccb3f6fdd0f37c81281bc97b3c89046f58935800ed8  18322  acrm_calibration_tests(1).html
+6d08c23a6a9778bb8e2f3ccb3f6fdd0f37c81281bc97b3c89046f58935800ed8  18322  acrm_calibration_tests.html
+8ed19943547b0deb7ca40f47cb4f482aa4d63a99906a3f5a6cb98ca52175d248  20259  acrm_demo.html
+89a5467f638ac68f2e4821728f314f986884361eed1462dd22ece422806403c0  23548  acrm_demo_v19.html
+1c8faf2288dc6e6e3f4a85c7d8dfa3e4ac0ca7dcb085698483e3451167ff944c  9713  acrm_v2_refactored (1).zip
+59862c179e0154edf6573eb80f1f6414b70b3f9a789089086be2e9e6ba8ca39cda  31590  acrm_v62_calibration_tests.py (patched).py
+bc62a32dd6fa1e21712aa835a7bba736ef7a1c106e5f7670b2e560c35e0ece34  48563  acrm_v7.html
+861f5ad28720fc4213f9f2b9c6b8c88ebf4443c3afcc9640b3c1f41c1fcb5d06  75728  acrm_v83_reasoning_governance.html
+86927106ed9d2d1a6a2ecb9f25bbd25fc004722e81cb89636a8da710e7193c76  12872  aics_dashboard.html
+
+Notes:
+- Files with identical SHA-256 are byte-identical duplicates.
+- This inventory is a preservation checkpoint; it does not claim that every listed file has already been committed to GitHub.
+- Current runtime under acrm_core/ and Session C are intentionally outside this historical inventory.
