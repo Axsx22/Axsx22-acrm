@@ -3,6 +3,7 @@ Recovery Gate — Refactored v2.0
 Contract: state transitions are deterministic and evidence-based.
 """
 
+import math
 from typing import List
 
 
@@ -10,13 +11,13 @@ class RecoveryGate:
     """
     Three-state machine: STABLE → DRIFTED → RECOVERING → STABLE
 
-    Invariant: can only exit DRIFTED if error < threshold 
-               for stability_window consecutive steps.
+    Invariant: can only exit DRIFTED if error is at or below the threshold
+               for stability_window consecutive observations.
 
     CHANGELOG from original v2.0:
     - Added _history to track recent errors (evidence-based)
-    - RECOVERING now requires ALL recent errors below threshold
-    - stable_counter resets if any recent error spikes
+    - RECOVERING counts consecutive qualifying observations directly
+    - stable_counter resets immediately when an error spikes
     """
 
     def __init__(self, stability_window: int = 5, drift_threshold: float = 0.25):
@@ -29,43 +30,29 @@ class RecoveryGate:
         self.stability_window = stability_window
         self.drift_threshold = drift_threshold
         self.stable_counter = 0
-        self._history: List[float] = []  # Evidence buffer
+        self._history: List[float] = []
 
     def update(self, error: float) -> str:
-        """
-        Update state machine with new error observation.
+        """Update state from one finite error observation."""
+        error = float(error)
+        if not math.isfinite(error):
+            raise ValueError("error must be finite")
 
-        Args:
-            error: current error metric (lower is better)
-
-        Returns:
-            Current state string
-        """
-        # Record evidence
-        self._history.append(float(error))
+        self._history.append(error)
         if len(self._history) > self.stability_window:
             self._history.pop(0)
 
-        # DRIFTED: error exceeds threshold
         if error > self.drift_threshold:
             self.state = "DRIFTED"
             self.stable_counter = 0
             return self.state
 
-        # Transition: DRIFTED → RECOVERING
         if self.state == "DRIFTED":
             self.state = "RECOVERING"
             self.stable_counter = 0
 
-        # RECOVERING: need sustained stability
         if self.state == "RECOVERING":
-            # All recent errors must be below threshold
-            if len(self._history) == self.stability_window and \
-               all(e <= self.drift_threshold for e in self._history):
-                self.stable_counter += 1
-            else:
-                self.stable_counter = 0  # Reset: evidence insufficient
-
+            self.stable_counter += 1
             if self.stable_counter >= self.stability_window:
                 self.state = "STABLE"
                 self.stable_counter = 0
