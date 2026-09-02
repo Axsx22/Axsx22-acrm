@@ -29,6 +29,104 @@ The research connects several areas:
 
 ACRM is an evolving architectural research program whose repository distinguishes clearly between implemented software, research artifacts, prototypes, demonstrations, and future architectural direction.
 
+### Why ACRM Exists
+
+ACRM did **not** originate as an attempt to build a comprehensive monitoring system. It began with a narrower engineering and research problem: **detecting behavioral drift, including deviation early enough to be observable before it became an explicit failure**.
+
+Long-running interaction exposed a more difficult class of deviation. Small changes could remain locally acceptable while accumulating over time, gradually altering the trajectory of the interaction without necessarily triggering conventional point-in-time monitoring. Within this research program, this phenomenon is referred to as **Soft Drift**.
+
+This changed the central problem. Detecting isolated deviations was not sufficient; the system needed an independent way to observe the **evolving behavioral trajectory** of a long-running interaction.
+
+As this problem was investigated, additional architectural requirements emerged. Each was introduced in response to a limitation or failure mode exposed by an earlier stage rather than being part of a single top-down plan to monitor every possible layer.
+
+The resulting progression can be summarized as:
+
+```text
+Drift detection
+      ↓
+Early / pre-failure drift detection
+      ↓
+Long-running interaction
+      ↓
+Soft Drift
+      ↓
+Need for temporal trajectory observation
+      ↓
+Need to preserve continuity of the evolving interaction field
+      ↓
+Expansion into multiple interacting behavioral dimensions
+      ↓
+Independent behavioral observability
+      ↓
+Measurement → Analysis → Characterization
+      ↓
+Alert / Report / Governance signal
+      ↓
+Controlled evolution research
+```
+
+This history is important because ACRM is therefore best understood as a **problem-driven evolutionary architecture**. Its breadth is a consequence of the central continuity problem: once behavior must be understood over time, isolated metrics are insufficient. Behavioral change, recurrence, persistence, context, state transitions, interaction effects, and other dimensions may need to be observed in relation to the same evolving trajectory.
+
+### The architectural role of ACRM
+
+ACRM is designed as an **external behavioral observability and governance layer**. Its primary architectural value is independent visibility into the evolving state and trajectory of an AI system, rather than direct control over the primary interaction.
+
+The intended control boundary is:
+
+```text
+Primary human ↔ AI interaction
+              │
+              │ observable state / signals
+              ▼
+        ┌─────────────────────┐
+        │        ACRM         │
+        │                     │
+        │ Observe             │
+        │ Measure             │
+        │ Analyze             │
+        │ Characterize        │
+        │ Alert / Report      │
+        └─────────────────────┘
+              │
+              ▼
+     External governance or
+     separately authorized action
+```
+
+The distinction is fundamental:
+
+> **ACRM's power is intended to come from visibility, not control.**
+
+Detection does not inherently imply intervention. ACRM may detect and report a behavioral deviation, characterize its trajectory, or generate a governance signal, while the decision to intervene remains outside the observation mechanism unless a separate, explicitly authorized control layer is introduced.
+
+This separation is intended to reduce the risk that the monitoring mechanism itself becomes an unexamined source of interaction modification. It also preserves a clean distinction between **observing a system** and **changing the system being observed**.
+
+ACRM does not claim that an external layer can observe every latent or internal model process. Its scope is the behavior, state, signals, and observable trajectory exposed to the architecture. Stronger claims about internal cognition, causality, generalization, or effectiveness require independent empirical evidence.
+
+### Architectural scope as an emergent consequence
+
+The current breadth of ACRM should therefore not be interpreted as a claim that every behavioral problem has already been solved or that every monitoring layer is already fully implemented. It represents the accumulated architectural response to problems encountered during the research process.
+
+The governing principle is:
+
+```text
+A limitation is observed
+        ↓
+A hypothesis is formulated
+        ↓
+A new architectural responsibility is defined
+        ↓
+A contract is specified
+        ↓
+An implementation is developed
+        ↓
+Tests establish software-level behavior
+        ↓
+Empirical evaluation determines whether the broader hypothesis holds
+```
+
+This distinction allows ACRM to grow without silently converting research hypotheses into implementation claims.
+
 ---
 
 ## 2. Architectural provenance and origin
