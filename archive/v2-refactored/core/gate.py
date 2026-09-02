@@ -49,13 +49,16 @@ class RecoveryGate:
 
         if self.state == "DRIFTED":
             self.state = "RECOVERING"
-            self.stable_counter = 1
+            self.stable_counter = 0
         elif self.state == "RECOVERING":
             self.stable_counter += 1
 
-        if self.state == "RECOVERING" and self.stable_counter >= self.stability_window:
-            self.state = "STABLE"
-            self.stable_counter = 0
+        if self.state == "RECOVERING":
+            if self.stable_counter == 0:
+                self.stable_counter = 1
+            if self.stable_counter >= self.stability_window:
+                self.state = "STABLE"
+                self.stable_counter = 0
 
         return self.state
 
