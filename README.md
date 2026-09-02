@@ -101,6 +101,28 @@ Detection does not inherently imply intervention. ACRM may detect and report a b
 
 This separation is intended to reduce the risk that the monitoring mechanism itself becomes an unexamined source of interaction modification. It also preserves a clean distinction between **observing a system** and **changing the system being observed**.
 
+### Modular externality and transformer independence
+
+A key architectural property follows directly from ACRM's modular design: **the observability layer is external to the mechanism it observes**.
+
+ACRM is not implemented as a modification of the Transformer itself and does not require entry into, modification of, or privileged access to the model's internal computational layers. In particular, its observability function does not require access to or modification of:
+
+- model weights or parameters;
+- attention, feed-forward, embedding, normalization, or other Transformer layers;
+- internal model execution mechanisms;
+- safety or supervisory layers of the underlying system;
+- or the primary interaction/control path as a mechanism of intervention.
+
+This is a structural consequence of the separation between **observation** and **control**, not merely an integration preference. ACRM consumes externally observable state, signals, or telemetry and derives measurements and characterizations from that evidence. It does not need to alter the mechanism that generates the observed behavior in order to perform its external observability role.
+
+Accordingly, a deployment may expose an appropriate observation or telemetry interface to ACRM without requiring architectural modification of the underlying Transformer or its supervisory mechanisms. The specific telemetry interface is an integration boundary; it is not a requirement for ACRM to become part of, or gain control over, the model's internal computation.
+
+The architectural principle can be stated compactly as:
+
+> **ACRM observes the system from outside the mechanism it governs; it does not need to enter or modify that mechanism in order to characterize its observable behavioral trajectory.**
+
+This property is particularly important for model-agnostic deployment: the observability layer can remain modular and externally attached while the underlying model, safety stack, or execution implementation changes independently.
+
 ACRM does not claim that an external layer can observe every latent or internal model process. Its scope is the behavior, state, signals, and observable trajectory exposed to the architecture. Stronger claims about internal cognition, causality, generalization, or effectiveness require independent empirical evidence.
 
 ### Architectural scope as an emergent consequence
