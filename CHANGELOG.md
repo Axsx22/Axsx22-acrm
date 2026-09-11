@@ -21,6 +21,19 @@ All notable repository changes are recorded here. Version labels distinguish imp
 - Scientific claims are explicitly separated from software-test results.
 - Empirical validation remains a separate workstream and is not represented as complete by unit-test success.
 
+## [8.6.0]
+
+### Implemented
+- Promoted the integrated executable runtime derived from the v7 Behavioral Runtime Field and v8.3 Field Governance research line into `acrm_core/runtime/`.
+- Added the v7 failure-mode taxonomy and runtime calibration/sanity checks.
+- Added v8.3 specialist governance, weighted evidence handling, balance gating, persistence, and frozen-state observation.
+- Added the runtime-to-`FieldState` observation bridge and Session C observation records.
+- Added unit coverage for the integrated v7/v8.3 runtime path and governance behavior.
+
+### Evidence boundary
+- The historical v7/v8.3 browser artifacts remain research lineage/evidence; the promoted Python implementation is the executable core runtime for v8.6.
+- Runtime promotion does not claim scientific validation of the underlying heuristics or research hypotheses.
+
 ## [8.5.0]
 
 ### Implemented
@@ -33,5 +46,3 @@ All notable repository changes are recorded here. Version labels distinguish imp
 - Behavioral inference engine.
 - Causal analysis engine.
 - Autonomous governance controller.
-- Intervention engine.
-- Scientific validation of the broader ACRM research hypotheses.
