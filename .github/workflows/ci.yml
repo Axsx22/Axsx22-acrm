@@ -1,4 +1,4 @@
-name: ACRM v8.5 CI
+name: ACRM v8.6 CI
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: Test ACRM v8.5
+    name: Test ACRM v8.6
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
