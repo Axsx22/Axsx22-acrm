@@ -82,7 +82,7 @@ The repository preserves this history while keeping historical artifacts separat
 
 **Current package/runtime version: `8.6.0`.**
 
-The current `main` branch contains the executable v8.6 runtime integration, the immutable `FieldState` contract, Session C governance/evolution components, unit tests, packaging, and GitHub Actions CI.
+The current `main` branch contains the executable v8.6 runtime integration, the immutable `FieldState` contract, Session C observation and controlled-evolution components, unit tests, packaging, and GitHub Actions CI.
 
 ### Current execution architecture
 
@@ -100,30 +100,39 @@ Observed / supplied interaction state
                 ▼
            FieldState
                 │
+                │ externally observable runtime output
                 ▼
-        Session C observation
-                │
-        ┌───────┼──────────────────┐
-        │       │                  │
-   trajectory  dynamic        topic/evolution
-   profiling   envelope           analysis
-        │       │                  │
-        └───────┴──────────┬───────┘
-                           ▼
-                   evolution readiness
-                           │
-                           ▼
-                  candidate generation
-                           │
-                           ▼
-                       test gate
-                           │
-                           ▼
-                  weighted specialist review
-                           │
-                           ▼
-                retain / reject / switch-recommended
+       ┌───────────────────────┐
+       │       Session C       │
+       │  independent observer │
+       └───────────┬───────────┘
+                   │
+          ┌────────┼─────────┐
+          │        │         │
+     trajectory  dynamic   topic / evolution
+     profiling   envelope     analysis
+          │        │         │
+          └────────┼─────────┘
+                   ▼
+          evolution readiness
+                   │
+                   ▼
+          candidate generation
+                   │
+                   ▼
+              test gate
+                   │
+                   ▼
+         weighted specialist review
+                   │
+                   ▼
+      retain / reject / switch-recommended
+                   │
+                   ▼
+       separately authorized action
 ```
+
+**Important architectural distinction:** Session C is **not a second implementation of the Runtime** and is not intended to reproduce or replace Runtime internals. Session C observes externally available Runtime outputs/events during execution and maintains its own observation, trajectory, dynamic-envelope, topic, candidate, and review representations.
 
 ### v8.6 runtime integration
 
@@ -139,7 +148,7 @@ The integrated runtime includes:
 - v8.3 specialist applicability/diagnosis/reporting;
 - weighted evidence and balance handling;
 - persistence and reporting state;
-- explicit runtime → neutral Session C observation bridge;
+- an explicit boundary for passing observable runtime state/events to Session C;
 - unit coverage for the promoted execution path.
 
 Historical browser/UI implementations remain preserved as evidence and lineage; the current executable source is represented in the Python core.
@@ -170,52 +179,107 @@ This distinction is fundamental:
 
 ---
 
-## 5. Session C — controlled evolution layer
+## 5. Session C — independent runtime observer and controlled evolution layer
 
-Session C is the current controlled-evolution research/engineering layer.
+Session C is a **background observer of the active system during execution**. Its architecture and implementation are deliberately separate from the Runtime that it observes.
 
-Its architecture separates:
+Its primary role is to observe execution behavior over time, accumulate an independent trajectory view, characterize dynamic change, identify whether an evolution condition is present, and—when the observation contract permits—prepare a candidate for separate testing and review.
+
+### Session C boundary
 
 ```text
-Observation
-    ↓
-Trajectory / envelope analysis
-    ↓
-Readiness
-    ↓
-Topic relevance
-    ↓
-Candidate generation
-    ↓
-Independent test gate
-    ↓
-Topic-aware weighted specialist review
-    ↓
-Evolution decision
+             ACTIVE RUNTIME
+                   │
+                   │ observable outputs / events
+                   ▼
+          ┌──────────────────┐
+          │    Session C     │
+          │ Background       │
+          │ Observation      │
+          │ & Evolution     │
+          │ Governance       │
+          └────────┬─────────┘
+                   │
+          ┌────────┼──────────────┐
+          ▼        ▼              ▼
+     trajectory  dynamic       topic /
+     analysis   tolerance      evolution
+                   │              │
+                   └──────┬───────┘
+                          ▼
+                  candidate generation
+                          │
+                          ▼
+                    independent test
+                          │
+                          ▼
+                  specialist review
+                          │
+                          ▼
+              SWITCH_RECOMMENDED
+                          │
+                          ▼
+             external authorization
 ```
 
-The current implementation deliberately maintains a hard boundary between candidate generation/testing and the active runtime.
+The Runtime and Session C therefore have different responsibilities:
+
+| Component | Responsibility | Executes Runtime patch? |
+|---|---|---:|
+| **Runtime** | Execute the active behavioral observation/governance path | Yes, as the active runtime itself |
+| **Session C** | Observe Runtime execution and analyze evolution signals | **No** |
+| **Candidate generator** | Produce a proposed evolution candidate, potentially including source code | **No** |
+| **Candidate tester** | Independently evaluate a candidate against the supplied test contract | **No active Runtime mutation** |
+| **Specialist review** | Evaluate candidate evidence and produce a governance result | **No** |
+| **External authorization** | Decide whether an approved recommendation is actually applied | Outside Session C |
 
 ### What Session C currently does
 
+- observes runtime-provided execution state/events without becoming part of the Runtime's internal decision path;
 - records neutral, immutable observations;
-- accumulates trajectory context;
+- maintains its own trajectory representation;
 - estimates dynamic envelopes from observed history;
 - evaluates threshold approach and evolution readiness;
 - infers relevant evolution topics from observed context;
-- represents and generates candidates through explicit interfaces;
-- applies deterministic testing/readiness gates;
-- performs weighted specialist review;
-- returns controlled decisions such as retain, reject, or switch-recommended.
+- requests or accepts candidate generation through explicit interfaces;
+- supports **code-bearing evolution candidates** through the candidate-generation interface;
+- sends candidates through an independent test gate;
+- performs weighted specialist review of candidate evidence;
+- returns controlled outcomes such as retain, reject, or `SWITCH_RECOMMENDED`.
 
-### What Session C does not claim to do
+### What Session C does not do
 
-- it does not execute generated source as part of the core governance path;
-- it does not automatically mutate the active runtime;
+- it does not duplicate the Runtime architecture or its internal algorithms;
+- it does not directly execute generated code as part of its core governance path;
+- it does not patch, replace, or mutate the active Runtime automatically;
+- `SWITCH_RECOMMENDED` is a recommendation, **not an execution command**;
+- it does not contain the external authorization boundary for applying a Runtime change;
 - it does not prove autonomous self-evolution;
 - it does not establish scientific validity of the underlying behavioral hypotheses.
 
-The current Session C implementation is therefore best described as a **controlled evolution supervisor / engineering checkpoint**, not an autonomous self-modifying runtime.
+This distinction is central to the current design: **Session C can participate in code generation and candidate evaluation without becoming the mechanism that executes or installs that code into the active Runtime.**
+
+### Observer contract
+
+Session C should be evaluated primarily on the correctness of its observation boundary and evolution-governance behavior:
+
+```text
+Runtime execution
+      ↓
+observable event/state
+      ↓
+Session C observation
+      ↓
+independent temporal analysis
+      ↓
+evolution readiness
+      ↓
+candidate / test / review
+      ↓
+recommendation only
+```
+
+Accordingly, Session C tests should not ask whether it reproduces Runtime internals. They should ask whether it correctly observes, analyzes, preserves isolation, and respects the recommendation-versus-execution boundary.
 
 ---
 
@@ -308,6 +372,23 @@ The latest validated `main` checkpoint is tested across this matrix.
 
 The test suite should be interpreted as **software validation**, not as a substitute for empirical validation of ACRM's research hypotheses.
 
+Session C validation should additionally cover:
+
+- Runtime → Session C observation isolation;
+- independent Session C state and lifecycle behavior;
+- temporal/trajectory observation under normal and adversarial sequences;
+- dynamic tolerance and readiness boundaries;
+- candidate generation, including code-bearing candidates;
+- independent candidate test behavior;
+- failed-test retry and review behavior;
+- specialist vote weighting and decision thresholds;
+- `SWITCH_RECOMMENDED` without automatic Runtime mutation;
+- separation between recommendation and external authorization;
+- malformed or conflicting candidate/review inputs;
+- resource and isolation properties where production deployment requires them.
+
+These tests establish software behavior against defined contracts. They do not establish scientific validity, generalization, or production effectiveness.
+
 ---
 
 ## 10. Research and engineering roadmap
@@ -318,7 +399,7 @@ The next stages are evidence-driven rather than claim-driven.
 
 1. Integrate provider adapters into a controlled evaluation path.
 2. Execute reproducible API/GPU-backed experiments across representative LLM configurations.
-3. Expand adversarial and long-horizon validation of Session C.
+3. Expand adversarial and long-horizon validation of the Session C observer boundary and evolution workflow.
 4. Reconcile and promote the strongest Session C hardening/validation work into the main baseline.
 5. Synchronize documentation and version identity around v8.6.
 6. Develop separate contracts for higher-level relation/transition/behavioral analysis before implementation.
@@ -356,7 +437,7 @@ Potential collaborators can contribute as engineering, evaluation, infrastructur
 acrm_core/
 ├── runtime/       # Current executable behavioral runtime integration
 ├── field/         # Canonical FieldState contract
-└── session_c/     # Controlled evolution / Session C implementation
+└── session_c/     # Independent observer + controlled evolution implementation
 
  tests/             # Software and contract tests
  research/          # Research-only calibration and experimental contracts
@@ -378,4 +459,4 @@ ACRM is an independent research and engineering project. The repository contains
 
 **Primary branch: `main`**
 
-**Current architectural focus: executable behavioral runtime + controlled Session C evolution + preparation for real provider/API-backed empirical evaluation.**
+**Current architectural focus: executable behavioral runtime + independent Session C observation + controlled candidate evolution/review + preparation for real provider/API-backed empirical evaluation.**
