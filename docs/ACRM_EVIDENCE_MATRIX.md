@@ -30,7 +30,7 @@ This matrix is the repository-level traceability map between claims, architectur
 | Runtime overhead can be bounded | Modular observer | integration demos | TEST-01 | Defined thresholds | Measured production overhead |
 | Compliance alignment is possible | Audit/RBAC architecture | technical brief / whitepaper | TEST-05 | Design alignment | Formal audit/certification |
 | Failure modes can be structured | ACRM-BRF / FM taxonomy | v7 artifacts | TEST-FM01..03 | Formal research layer | Empirical causal validation |
-| ACRM has a coherent research lineage | v5 → v7 → v8.5 → Session C | evolution roadmap | lineage audit | Strong documentary evidence | Version compatibility completion |
+| ACRM has a coherent research lineage | v5 → v7 → v8.5 → v8.6 → Session C | evolution roadmap | lineage audit | Strong documentary evidence | Version compatibility completion |
 | Claims are falsifiable | Architecture + explicit benchmark | ACRM-EVAL | seven benchmark suites | Strong methodology | Independent replication |
 | Session C adds governed evolution above monitoring | C-A → trajectory → dynamic envelope → topic → candidate → test → vote | Session C implementation | Session C tests | Experimental implementation | Scientific efficacy vs baseline |
 
