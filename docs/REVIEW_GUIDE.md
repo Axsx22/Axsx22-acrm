@@ -3,6 +3,12 @@
 **Repository:** ACRM v8.6  
 **Review mode:** code-first, contract-first, evidence-aware
 
+## 0. Canonical external review path
+
+For a first-time external reviewer, use **[EXTERNAL_REVIEW_PATH.md](EXTERNAL_REVIEW_PATH.md)** as the deterministic entry sequence. It covers clean-checkout reproduction, review gates, maturity vocabulary, evidence boundaries, and the final review checklist.
+
+This document remains the detailed component-level guide. The external review path is the navigation layer above it.
+
 ## 1. What this repository represents
 
 This repository is a research-to-runtime engineering project. It contains both a concrete executable core and research lineage. The presence of a concept, historical artifact, dashboard, or architecture document does not by itself mean that capability is implemented in the current runtime.
