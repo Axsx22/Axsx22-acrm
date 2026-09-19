@@ -9,7 +9,7 @@
 |---|---|
 | v5.0 HTML Demo | ACRM Cognitive Conceptual Model (ACRM-CCM) |
 | v7 HTML Field | ACRM Behavioral Runtime Field Model (ACRM-BRF) |
-| v8.5 Core | ACRM Core Runtime Configuration / validated foundation |
+| v8.5 Core | Historical ACRM Core Runtime foundation |\n| v8.6 Core | Current ACRM Core Runtime implementation / Session C checkpoint |
 | v1.1 Benchmark | ACRM-EVAL Benchmark Framework |
 | Future implementation | ACRM Core Runtime |
 
