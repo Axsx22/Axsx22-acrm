@@ -6,7 +6,7 @@ This directory is reserved for executable dashboard prototypes and their support
 
 **Demo / prototype:** a visual or interactive artifact used to explore an ACRM concept.
 
-**Core implementation:** code that belongs to the tested v8.5 runtime contract.
+**Core implementation:** code that belongs to the tested v8.6 runtime contract.
 
 **Evidence:** screenshots or screen recordings showing a demo being executed.
 
@@ -44,4 +44,4 @@ The screen recordings supplied during development are useful for showing that th
 
 ## Transparency rule
 
-Historical prototypes and roadmap documents describe design intent and prior experiments. They do not, by themselves, establish that a capability exists in `acrm_core`. Promotion into v8.5 requires a defined contract, implementation, and tests.
+Historical prototypes and roadmap documents describe design intent and prior experiments. They do not, by themselves, establish that a capability exists in `acrm_core`. Promotion into v8.6 requires a defined contract, implementation, and tests.
