@@ -1,5 +1,7 @@
 # Contributing to ACRM
 
+For first-time external review, start with [`docs/EXTERNAL_REVIEW_PATH.md`](docs/EXTERNAL_REVIEW_PATH.md). It defines the clean-checkout reproduction path, review gates, evidence boundaries, and reviewer checklist.
+
 ACRM is a research-oriented engineering project. Contributions should make the system more reviewable, reproducible, and explicit about evidence.
 
 ## Before changing code
