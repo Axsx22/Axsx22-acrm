@@ -6,6 +6,7 @@ All notable repository changes are recorded here. Version labels distinguish imp
 
 ### Added
 - Engineering governance and evidence policy in `docs/ENGINEERING_GOVERNANCE.md`.
+- Deterministic external reviewer path in `docs/EXTERNAL_REVIEW_PATH.md`, including clean-checkout reproduction, review gates, evidence classification, and reviewer checklist.
 - Calibration epistemic-invariant test contract in `docs/testing/EPISTEMIC_INVARIANTS.md`.
 - v7.9 Obstruction Theory status record preserving the supplied implementation as a research artifact in `docs/research/ACRM_v7_9_OBSTRUCTION_THEORY_STATUS.md`.
 - A repository-level implementation/gap matrix in `docs/IMPLEMENTATION_GAP_MATRIX.md` to keep engineering work, validation work, and unimplemented research claims explicitly separated.
