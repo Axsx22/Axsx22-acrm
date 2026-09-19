@@ -1,4 +1,4 @@
-"""Validated immutable recorded state for ACRM v8.5."""
+"""Validated immutable recorded state for ACRM v8.6."""
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
