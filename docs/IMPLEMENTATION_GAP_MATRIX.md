@@ -1,7 +1,7 @@
 # ACRM implementation and validation gap matrix
 
 **Status:** Active engineering control document  
-**Scope:** ACRM v8.5 core and Session C  
+**Scope:** ACRM v8.6 core and Session C  
 **Purpose:** Keep implemented behavior, evolving implementation, engineering verification, empirical validation, and future research claims explicitly separated.
 
 ## Status vocabulary
@@ -14,7 +14,7 @@
 | Specified | Defined architecturally or contractually, but not necessarily implemented. |
 | Empirical | Requires measurements from controlled experiments rather than unit tests. |
 | Independent | Requires reproduction or review outside the original implementation context. |
-| Future | Not currently implemented and should not be implied by the v8.5 core. |
+| Future | Not currently implemented and should not be implied by the v8.6 core. |
 
 ## Matrix
 
@@ -32,7 +32,7 @@
 | Weighted specialist review | Implemented + Tested + Evolving | Session C orchestration tests | Validate weighting assumptions against independent evaluators. |
 | Evolution decision | Implemented + Tested | `EvolutionSessionC`, orchestration tests | Refine decision policy only through explicit contract changes and evidence. |
 | Runtime mutation / automatic deployment | Future | Explicitly absent from current Session C | Requires a separate safety and governance design; must never be inferred from candidate recommendation. |
-| Causal analysis | Future | Not implemented in v8.5 core | Requires a separately defined causal methodology and evidence. |
+| Causal analysis | Future | Not implemented in v8.6 core | Requires a separately defined causal methodology and evidence. |
 | Full behavioral inference engine | Future | Not implemented | Define falsifiable scope and evaluation protocol before implementation. |
 | Scientific threshold calibration | Empirical | Unit tests are insufficient | Run controlled multi-model longitudinal experiments and publish calibration results. |
 | Long-horizon behavioral claims | Empirical | Research documents and hypotheses only | Execute controlled long-horizon evaluations. |
