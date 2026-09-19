@@ -24,6 +24,6 @@ The browser API `window.ACRM_DEMO.processInput(S, rho, delta)` is also exposed f
 
 ## Important evidence boundary
 
-This is a **research/demo artifact**, not a claim that the complete ACRM architecture or v8.5 core is implemented in this file. The decision logic is intentionally small and transparent so that users can inspect and experiment with it. The sample scenario is optional and is not the only execution path.
+This is a **research/demo artifact**, not a claim that the complete ACRM architecture or v8.6 core is implemented in this file. The decision logic is intentionally small and transparent so that users can inspect and experiment with it. The sample scenario is optional and is not the only execution path.
 
 The normative implementation boundary remains the tested ACRM core documented elsewhere in the repository.
