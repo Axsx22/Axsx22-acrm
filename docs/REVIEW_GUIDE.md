@@ -1,6 +1,6 @@
 # ACRM Repository Review Guide
 
-**Repository:** ACRM v8.5  
+**Repository:** ACRM v8.6  
 **Review mode:** code-first, contract-first, evidence-aware
 
 ## 1. What this repository represents
@@ -19,6 +19,8 @@ Read:
 2. `docs/ACRM_v8_5_DEVELOPMENT_STATUS.md`
 3. `docs/IMPLEMENTATION_GAP_MATRIX.md`
 4. `docs/SESSION_C_IMPLEMENTATION_STATUS.md`
+
+The v8.5 development-status document is retained as a historical checkpoint; the current repository scope is v8.6.
 
 This establishes what is implemented, what is evolving, and what is explicitly outside scope.
 
@@ -167,7 +169,7 @@ Use **mismatch** only when the implementation materially differs from the respon
 
 The current repository does not need to be judged as a complete autonomous agent or complete self-modifying system. In particular, the absence of runtime source execution, automatic deployment, causal inference, or full behavioral inference is explicitly documented rather than silently missing.
 
-Those capabilities may become future architectural layers, but they should not be used as defects against the current v8.5 scope unless the repository later claims them as implemented.
+Those capabilities may become future architectural layers, but they should not be used as defects against the current v8.6 scope unless the repository later claims them as implemented.
 
 ## 7. Review principle
 
