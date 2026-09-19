@@ -1,7 +1,7 @@
 # Session C Implementation Status
 
 **Status:** Active development / engineering checkpoint  
-**Scope:** Session C evolution and governance layer in ACRM v8.5
+**Scope:** Session C evolution and governance layer in ACRM v8.6
 
 ## 1. Purpose
 
