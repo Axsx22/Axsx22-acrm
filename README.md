@@ -456,25 +456,57 @@ Potential future layers include broader behavioral characterization, relation/tr
 
 ---
 
-## 11. Investment / collaboration position
+## 11. Investment, infrastructure & collaboration
 
-ACRM is a **research-driven deep-tech software architecture**, not a conventional feature-level application.
+ACRM is currently at the transition from an **architecturally developed research prototype** toward **empirical validation**.
 
-The current repository provides an inspectable engineering foundation from which additional research can be executed incrementally. The immediate value of additional engineering resources is therefore to increase:
+The next meaningful step is not simply adding architectural complexity. It is evaluating the implemented system against real LLM workloads under controlled, reproducible conditions.
 
-- experimental capability;
-- API/GPU infrastructure;
-- evaluation depth;
-- reproducibility;
-- testing capacity;
-- integration throughput;
-- and independent validation.
+This requires access to:
+- model/provider APIs;
+- GPU-backed inference where self-hosted or open-weight models are appropriate;
+- evaluation and experiment infrastructure;
+- telemetry, trace, and reproducibility tooling;
+- software/evaluation engineering capacity;
+- long-horizon and adversarial interaction workloads;
+- independent evaluation and replication.
 
-The project does not claim that commercial defensibility, scientific validity, or production readiness has already been established. Those are future evidence milestones.
+The intended progression is:
 
-Potential collaborators can contribute as engineering, evaluation, infrastructure, QA, research, or strategic partners without being represented as employees of the project unless a formal employment relationship exists.
+```
+implemented architecture
+        ↓
+API / GPU evaluation environment
+        ↓
+controlled real-model experiments
+        ↓
+long-horizon + adversarial evaluation
+        ↓
+reproducible benchmark evidence
+        ↓
+independent validation
+        ↓
+evidence-based decisions about further development
+```
 
----
+The immediate research questions concern whether ACRM can reliably characterize persistent directional change in long-running interaction fields, its false-positive/false-negative behavior, its robustness across models/providers, and whether the Runtime/Session C observer boundary remains isolated under adversarial conditions.
+
+These are **research questions, not established product claims**.
+
+Resource requirements should therefore be milestone-driven:
+
+1. **Experimental foundation** — provider integration, evaluation harness, trace/telemetry contracts, baselines.
+2. **Controlled validation** — API/GPU experiments, long-horizon workloads, adversarial sequences, ablation studies, quantitative error analysis.
+3. **Independent evaluation** — replication, cross-provider/model testing, robustness and failure analysis.
+4. **Engineering decision** — use measured evidence to determine whether further investment should target production integration, broader evaluation, additional governance layers, or a revised research direction.
+
+Investment or infrastructure support would primarily increase execution capacity, experimental scale, reproducibility, validation depth, and engineering throughput.
+
+The project does **not** currently claim production effectiveness, universal model generalization, scientific proof of its cognitive hypotheses, autonomous self-improvement, product-market fit, or production safety certification solely from repository evidence.
+
+The detailed resource requirements, validation program, collaboration models, and evidence milestones are documented in [docs/INVESTMENT.md](docs/INVESTMENT.md).
+
+**Current requirement:** API/model access + GPU/inference infrastructure + evaluation engineering + controlled real-world interaction traces.
 
 ## 12. Repository map
 
