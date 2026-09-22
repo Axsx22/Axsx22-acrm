@@ -24,6 +24,32 @@ independent validation
 evidence-based claims about effectiveness and limits
 ```
 
+The investment case at this stage is therefore an **evidence-generation program**: capital and infrastructure are converted into controlled experiments, measurable technical milestones, and progressively reduced uncertainty.
+
+## Why this stage is investable
+
+ACRM has moved beyond a purely conceptual proposal.
+
+Its development history includes explicit computational scoring, attribution, calibration, uncertainty handling, ensemble behavior, runtime contracts, testing, and increasingly strict separation between observation, evolution, and decision authority.
+
+An earlier ACRM v6.4 implementation, for example, explicitly addressed:
+
+- separation of raw risk signals from downstream decision scores;
+- exact attribution of component contributions from the scoring formulas;
+- alignment of the same risk signal across world-level estimation and ensemble evaluation;
+- calibration against observed outcomes;
+- dynamic weighting based on evaluated decisions.
+
+That earlier implementation should **not** be treated as the current v8.6 architecture. It is useful as evidence of architectural lineage: the project has repeatedly converted conceptual questions into explicit, testable computational structures and then refined the boundaries between measurement, scoring, decision, and observation.
+
+The subsequent architectural direction increasingly separates **observation from interpretation and decision authority**. In the current design, ACRM is intended to report structured observations and directional change rather than decide whether a change is correct, incorrect, safe, harmful, desirable, or actionable.
+
+This distinction is important for the next stage because it makes the central research question experimentally tractable:
+
+> **Can an external, model-agnostic observer extract useful and reproducible information about long-running interaction behavior without becoming the decision authority over that behavior?**
+
+That question requires real models, controlled workloads, reproducible traces, and independent evaluation.
+
 ## What additional resources are needed for?
 
 The immediate requirement is an experimental environment in which ACRM can be evaluated against real LLM workloads rather than only synthetic fixtures and unit-level contracts.
@@ -93,8 +119,6 @@ Required infrastructure may include:
 
 The immediate research program should test the **claims that can actually be falsified**.
 
-Examples include:
-
 ### Behavioral observability
 
 Can ACRM reliably characterize persistent directional change in long-running interaction fields from externally observable signals?
@@ -161,6 +185,8 @@ A first serious evaluation phase should include:
 
 The initial benchmark should be designed before large-scale compute is committed.
 
+A core principle is **measurement before scale**: define the workload, baseline, success criteria, failure criteria, trace format, and analysis procedure before materially increasing infrastructure expenditure.
+
 ## What investment enables
 
 Investment or infrastructure support would primarily accelerate five measurable capabilities:
@@ -187,7 +213,7 @@ A controlled environment capable of running ACRM against multiple real LLMs thro
 
 A benchmark and evaluation record describing:
 
-- detection/observation behavior;
+- observation behavior;
 - false-positive and false-negative characteristics;
 - persistence and trajectory behavior;
 - robustness across models and providers;
@@ -210,6 +236,24 @@ A future partner, engineering team, or investor should be able to inspect the im
 If validation supports the relevant hypotheses, the project can move from research prototype toward a broader observability/evaluation infrastructure for long-running LLM systems.
 
 If validation does not support particular hypotheses, the same evidence will identify which components require revision, narrowing, or abandonment.
+
+## What the investor/partner receives at each stage
+
+The intended return from this phase is first **technical and evidentiary**, before any commercial outcome is assumed.
+
+| Milestone | Primary deliverable | Evidence created | Decision enabled |
+|---|---|---|---|
+| Experimental foundation | Evaluation harness, adapters, telemetry, baselines | Reproducible test environment | Proceed to controlled experiments |
+| Controlled validation | Multi-model, long-horizon and adversarial runs | Quantitative performance and failure data | Identify validated and unsupported hypotheses |
+| Independent evaluation | Replication and external methodology review | Less team-dependent evidence | Decide whether results justify broader engineering |
+| Engineering maturation | Hardened software and integrations | Operational reliability evidence | Assess deployment/integration paths |
+| Scale decision | Technical and economic requirements for the next stage | Consolidated evidence package | Determine whether and where additional capital is justified |
+
+This creates a deliberate sequence:
+
+**capital → technical milestone → evidence → decision → next allocation**
+
+The purpose is to make each subsequent investment decision better informed than the previous one.
 
 ## Intended long-term direction
 
@@ -279,19 +323,11 @@ Engineering Decisions
 Potentially scalable technology
 ```
 
-At each stage, the project should be able to answer a more precise question:
+At each stage, the project should be able to answer a more precise question.
 
-| Stage | What the investment buys | Result |
-|---|---|---|
-| Foundation | API/GPU access, harness, telemetry, engineering | Reproducible experiment capability |
-| Validation | Large and diverse controlled workloads | Quantitative behavioral evidence |
-| Independent evaluation | Replication and external review | Greater confidence or identified limitations |
-| Engineering maturation | Hardening and integration | Deployable technical baseline, if justified |
-| Scale decision | Evidence-based product/system planning | Clear basis for the next capital allocation |
+The investor/partner is not being asked to finance an undefined period of development. The proposed model is milestone-driven: resources are tied to experiments and deliverables, and continuation is informed by evidence.
 
-This means the investor is not being asked to fund an undefined development period. The intended model is **capital → measurable technical milestone → evidence → next decision**.
-
-The exact commercial or deployment outcome remains contingent on validation results. No specific return, market adoption, or production performance is assumed in advance.
+No specific commercial return, market adoption, valuation outcome, or production performance is assumed in advance.
 
 ## Suggested staged funding/use-of-resources model
 
@@ -351,6 +387,46 @@ Only after the evidence from earlier stages should the project determine whether
 - a larger engineering team;
 - or a revised research direction.
 
+This stage is deliberately an **evidence gate**, not an assumed transition to production.
+
+## Architectural lineage and development evidence
+
+ACRM's current architecture is the result of successive refinement rather than a single implementation.
+
+An earlier v6.4 implementation contained explicit mechanisms for:
+
+- raw risk-signal propagation into ensemble evaluation;
+- exact component attribution from the underlying score formulas;
+- risk alignment between world-level estimation and ensemble evaluation;
+- outcome-based calibration;
+- dynamic component weighting;
+- uncertainty and stability tracking;
+- live stream execution and scenario-based testing.
+
+Those mechanisms are historical development evidence, not a statement that v8.6 uses the same decision architecture.
+
+Their significance is that the project has repeatedly attempted to make internal assumptions **explicit, traceable, and testable**. Later versions increasingly separated runtime behavior from observation, and observation from decision authority.
+
+The resulting direction is:
+
+```
+early computational decision mechanisms
+              ↓
+explicit signals, attribution and calibration
+              ↓
+stronger contracts and testing
+              ↓
+runtime / observer separation
+              ↓
+external observation and structured reporting
+              ↓
+empirical validation
+```
+
+This lineage matters to an investment partner because the requested resources are intended to validate an architecture that has already undergone substantial structural refinement—not to fund an unspecified conceptual exploration.
+
+At the same time, repository evolution is not scientific validation. Historical implementation is evidence of **engineering development**, not proof of effectiveness.
+
 ## Current maturity and what is not yet claimed
 
 The current repository should be understood as an **architecturally developed research prototype**, not as a production-proven product.
@@ -369,7 +445,7 @@ Those questions belong to the next evidence stage.
 
 ## Collaboration models
 
-The project can accept support in several forms:
+The project can accept support in several forms.
 
 ### Infrastructure partnership
 
@@ -419,9 +495,16 @@ A suitable evaluation/infrastructure partner should be able to inspect:
 - raw evaluation traces where disclosure permits;
 - analysis methodology;
 - failure cases;
-- limitations and negative results.
+- limitations and negative results;
+- the provenance linking reported results to the code, model, configuration, and experimental run that produced them.
 
-This is important to the project philosophy: **negative evidence is part of the research result.**
+This is important to the project philosophy:
+
+**negative evidence is part of the research result.**
+
+A credible evaluation package should make it possible to distinguish:
+
+**what the system did → what was measured → how it was evaluated → what conclusion the evidence supports.**
 
 ## Investment principle
 
@@ -435,6 +518,8 @@ It is:
 
 The immediate purpose of funding or infrastructure is therefore to convert architectural hypotheses into measurable evidence.
 
+The intended long-term value is not assumed in advance. It is to establish, through disciplined experimentation, whether ACRM's architecture merits the engineering, integration, and scale required for the next stage.
+
 ## Status
 
 **Current baseline:** ACRM v8.6.0  
@@ -442,4 +527,4 @@ The immediate purpose of funding or infrastructure is therefore to convert archi
 **Current phase:** engineering prototype → empirical validation  
 **Primary next requirement:** API/model access + GPU/inference infrastructure + evaluation engineering + controlled real-world interaction traces
 
-This document intentionally separates **what exists**, **what is required to test it**, and **what remains unproven**.
+This document intentionally separates **what exists**, **what is required to test it**, **what an investment is intended to produce**, and **what remains unproven**.
