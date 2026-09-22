@@ -173,6 +173,126 @@ Investment or infrastructure support would primarily accelerate five measurable 
 
 The objective is therefore not simply to "build more ACRM." It is to determine, with controlled evidence, **where ACRM works, where it fails, under what conditions, and what additional engineering is justified.**
 
+## What an investment is intended to produce
+
+An investment should result in **defined technical and evidentiary assets**, not only additional development activity.
+
+Subject to successful validation, the intended outputs of the next phase are:
+
+### 1. A reproducible evaluation platform
+
+A controlled environment capable of running ACRM against multiple real LLMs through API and GPU-backed inference, with versioned configurations, trace capture, telemetry, and reproducible replay.
+
+### 2. A quantitative evidence base
+
+A benchmark and evaluation record describing:
+
+- detection/observation behavior;
+- false-positive and false-negative characteristics;
+- persistence and trajectory behavior;
+- robustness across models and providers;
+- adversarial failure modes;
+- computational and operational cost;
+- known limitations and boundary conditions.
+
+The expected result is not a predetermined positive conclusion. A technically useful result may also identify where the architecture does not work.
+
+### 3. A validated engineering baseline
+
+A better-tested implementation with stronger provider adapters, evaluation tooling, isolation guarantees, reproducibility controls, and documented operational boundaries.
+
+### 4. A decision-ready technical package
+
+A future partner, engineering team, or investor should be able to inspect the implementation, evaluation methodology, experimental traces where disclosure permits, results, failures, and limitations and make an informed decision about further deployment or research.
+
+### 5. A basis for the next architectural stage
+
+If validation supports the relevant hypotheses, the project can move from research prototype toward a broader observability/evaluation infrastructure for long-running LLM systems.
+
+If validation does not support particular hypotheses, the same evidence will identify which components require revision, narrowing, or abandonment.
+
+## Intended long-term direction
+
+The long-term objective is to develop ACRM into an **external, model-agnostic observability layer for long-running AI interactions** that can operate alongside existing orchestration, evaluation, safety, and governance systems.
+
+The intended architectural position is:
+
+```
+User / Application
+        │
+        ▼
+LLM Orchestration
+        │
+        ├──────────────► Model Runtime
+        │                       │
+        │                       ▼
+        │                Interaction signals
+        │                       │
+        └──────────────► ACRM Observer
+                                │
+                                ▼
+                       Structured observation
+                                │
+                                ▼
+                 Evaluation / Safety / Governance
+                                │
+                                ▼
+                         Human / System decision
+```
+
+ACRM is intended to remain an **observation and reporting layer**, not the authority that decides whether a detected change is acceptable, safe, harmful, correct, or actionable.
+
+This separation is central to the future design. ACRM should provide structured evidence that other systems and authorized decision-makers can use according to their own policies.
+
+### Potential future capabilities
+
+If the validation program supports them, future development may include:
+
+- broader provider and model integrations;
+- standardized long-horizon interaction telemetry;
+- benchmark and replay infrastructure;
+- trajectory and field-level observability APIs;
+- integration with existing evaluation and governance pipelines;
+- controlled evolution workflows with explicit authorization;
+- operational dashboards and research interfaces;
+- large-scale comparative studies across model families and deployment environments.
+
+These are **target capabilities**, not commitments that the current implementation already provides.
+
+## Investor / partner outcome model
+
+The value created by investment can therefore be viewed as a sequence of uncertainty reductions:
+
+```
+Investment
+   ↓
+Infrastructure + Engineering
+   ↓
+Controlled Experiments
+   ↓
+Measured Evidence
+   ↓
+Validated / Falsified Hypotheses
+   ↓
+Engineering Decisions
+   ↓
+Potentially scalable technology
+```
+
+At each stage, the project should be able to answer a more precise question:
+
+| Stage | What the investment buys | Result |
+|---|---|---|
+| Foundation | API/GPU access, harness, telemetry, engineering | Reproducible experiment capability |
+| Validation | Large and diverse controlled workloads | Quantitative behavioral evidence |
+| Independent evaluation | Replication and external review | Greater confidence or identified limitations |
+| Engineering maturation | Hardening and integration | Deployable technical baseline, if justified |
+| Scale decision | Evidence-based product/system planning | Clear basis for the next capital allocation |
+
+This means the investor is not being asked to fund an undefined development period. The intended model is **capital → measurable technical milestone → evidence → next decision**.
+
+The exact commercial or deployment outcome remains contingent on validation results. No specific return, market adoption, or production performance is assumed in advance.
+
 ## Suggested staged funding/use-of-resources model
 
 Resource requirements should be tied to milestones rather than a single large infrastructure commitment.
