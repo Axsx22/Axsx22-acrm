@@ -20,7 +20,7 @@ ACRM is intentionally **not** presented as a safety filter, policy engine, auton
 
 ### Architectural boundary
 
-```text
+```
 Primary human ↔ AI interaction
               │
               │ observable state / signals
@@ -31,11 +31,16 @@ Primary human ↔ AI interaction
         │ Measure             │
         │ Analyze             │
         │ Characterize        │
-        │ Govern / Report     │
+        │ Report              │
         └─────────────────────┘
               │
+              │ structured observation/report
               ▼
-     Separately authorized action
+   Separately authorized downstream layer
+       (e.g. Safety / Governance)
+              │
+              ▼
+       Policy-defined decision/action
 ```
 
 The core principle is:
@@ -43,6 +48,40 @@ The core principle is:
 > **ACRM is designed to derive governance value from independent visibility, not from direct control of the model.**
 
 ACRM consumes externally observable state, signals, or telemetry. It does not require access to model weights, attention layers, hidden execution mechanisms, or internal Transformer components. Stronger claims about latent cognition, causality, generalization, or effectiveness require independent empirical evidence.
+
+### Observation is not judgment
+
+A central boundary of the current architecture is that ACRM reports observable change without deciding whether that change is correct, incorrect, desirable, undesirable, safe, unsafe, or otherwise worthy of intervention.
+
+For a long-running interaction, ACRM may identify and report a persistent directional change in the observed behavioral trajectory or interaction field. The report can describe properties such as:
+
+- what changed;
+- how the current trajectory relates to its observed history;
+- the persistence and magnitude of the change;
+- whether the change approaches or occupies a field-derived envelope;
+- the evidence available for the observation.
+
+It does **not** determine:
+
+- whether the deviation is an error;
+- whether the model or user caused it;
+- whether the change represents improvement or degradation;
+- whether an intervention should occur;
+- or what action a downstream system should take.
+
+The intended separation is:
+
+```
+Observation
+    ≠
+Interpretation
+    ≠
+Decision
+    ≠
+Action
+```
+
+ACRM therefore acts as an **observatory and reporting layer**. Its output may be consumed by separately authorized layers—such as Safety, Governance, monitoring, or other policy-defined systems—which may apply their own criteria and make decisions. ACRM itself remains responsible for the observation and characterization of the observed change, not for determining whether that change is right or wrong.
 
 ---
 
@@ -54,7 +93,7 @@ Within the research program this phenomenon is referred to as **Soft Drift**.
 
 The architectural progression was therefore problem-driven:
 
-```text
+```
 Drift detection
       ↓
 Early / pre-failure detection
@@ -86,7 +125,7 @@ The current `main` branch contains the executable v8.6 runtime integration, the 
 
 ### Current execution architecture
 
-```text
+```
 Observed / supplied interaction state
                 │
                 ▼
@@ -187,7 +226,7 @@ Its primary role is to observe execution behavior over time, accumulate an indep
 
 ### Session C boundary
 
-```text
+```
              ACTIVE RUNTIME
                    │
                    │ observable outputs / events
@@ -196,7 +235,7 @@ Its primary role is to observe execution behavior over time, accumulate an indep
           │    Session C     │
           │ Background       │
           │ Observation      │
-          │ & Evolution     │
+          │ & Evolution      │
           │ Governance       │
           └────────┬─────────┘
                    │
@@ -263,7 +302,7 @@ This distinction is central to the current design: **Session C can participate i
 
 Session C should be evaluated primarily on the correctness of its observation boundary and evolution-governance behavior:
 
-```text
+```
 Runtime execution
       ↓
 observable event/state
@@ -322,7 +361,7 @@ The repository also preserves checksums and provenance for historical ACRM sourc
 
 ACRM uses the following maturity distinction:
 
-```text
+```
 Historical observation
         ↓
 Research question
@@ -433,7 +472,7 @@ Potential collaborators can contribute as engineering, evaluation, infrastructur
 
 ## 12. Repository map
 
-```text
+```
 acrm_core/
 ├── runtime/       # Current executable behavioral runtime integration
 ├── field/         # Canonical FieldState contract
