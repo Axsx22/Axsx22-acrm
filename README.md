@@ -6,6 +6,12 @@ ACRM is designed and developed by **Ali Farahani**, independent AI researcher an
 
 > **Repository principle:** ACRM distinguishes historical observation, research hypothesis, architecture, software contract, implementation, software testing, and empirical validation. Passing a software test does not by itself establish a scientific claim.
 
+### Repository engineering model
+
+The repository uses a **main-first GitHub Flow** model. `main` is the single canonical integration branch; short-lived purpose-specific branches are used for engineering, testing, documentation, research, and audit work. There is no permanent `develop` branch.
+
+Branch lifecycle, naming, historical-branch handling, and contribution expectations are defined in [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/BRANCHING.md](docs/BRANCHING.md).
+
 ---
 
 ## 1. What is ACRM?

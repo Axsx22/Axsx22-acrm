@@ -1,57 +1,92 @@
 # Contributing to ACRM
 
-For first-time external review, start with [`docs/EXTERNAL_REVIEW_PATH.md`](docs/EXTERNAL_REVIEW_PATH.md). It defines the clean-checkout reproduction path, review gates, evidence boundaries, and reviewer checklist.
+## Development model
 
-ACRM is a research-oriented engineering project. Contributions should make the system more reviewable, reproducible, and explicit about evidence.
+ACRM follows a **main-first GitHub Flow** model.
 
-## Before changing code
+- `main` is the canonical branch.
+- Work is developed on short-lived purpose-specific branches.
+- Changes return to `main` through review and CI.
+- There is no permanent `develop` branch.
+- Historical and research branches are not treated as current runtime baselines.
 
-1. Identify the component's responsibility.
-2. State whether the change is core, research, demo, experiment, or documentation.
-3. Define inputs, outputs, invariants, and failure boundaries.
-4. Check whether the proposed behavior already exists elsewhere in the repository.
+See [docs/BRANCHING.md](docs/BRANCHING.md) for the branch lifecycle policy.
 
-## For core changes
+## Before opening a change
 
-A core change should normally include:
+1. Identify the architectural boundary affected by the change.
+2. Keep Runtime and Session C responsibilities separate.
+3. Preserve the distinction between observation, interpretation, decision, and action.
+4. Add or update tests for changed software contracts.
+5. Run the full test suite locally when practical.
+6. Keep documentation synchronized with implemented behavior.
+7. Do not silently promote research artifacts into the executable baseline.
 
-- implementation;
-- contract documentation;
-- unit tests;
-- edge-case tests;
-- relevant integration tests;
-- updated status/changelog information;
-- explicit limitations.
+## Branch naming
 
-## For research artifacts
+Use one of:
 
-Do not rewrite a research artifact to make it appear production-ready. Preserve provenance and document:
+- `feat/<description>`
+- `fix/<description>`
+- `refactor/<description>`
+- `test/<description>`
+- `docs/<description>`
+- `research/<description>`
+- `audit/<description>`
 
-- what the artifact actually does;
-- which values are simulated or heuristic;
-- known mathematical or engineering assumptions;
-- what remains unvalidated;
-- how it could be promoted into a tested component.
-
-## Tests
-
-Run:
-
-```bash
-python -m pytest -q
-```
-
-A green test suite establishes compliance with implemented software contracts. It is not evidence of scientific validity.
+Use lowercase, concise names, and one purpose per branch.
 
 ## Pull requests
 
-A useful PR description should answer:
+A pull request should state:
 
-- What changed?
-- Why was it needed?
-- What evidence supports the change?
-- What tests were added or updated?
-- What remains unvalidated?
-- Does the change alter the public contract?
+- what changed;
+- why it changed;
+- which architectural boundary is affected;
+- tests added or updated;
+- CI/test status;
+- whether the change is implementation, documentation, research, or experimental work.
 
-Avoid unsupported claims such as "proven," "production-ready," "causal," or "scientifically validated" unless the repository contains evidence that supports the exact claim.
+Do not describe a software test result as empirical or scientific validation.
+
+## Runtime and Session C
+
+Changes involving Session C must preserve the observer boundary:
+
+```
+Runtime execution
+      ↓
+observable state/event
+      ↓
+Session C observation
+      ↓
+analysis / candidate / review
+      ↓
+recommendation
+      ↓
+external authorization
+```
+
+Session C must not silently become an automatic runtime mutation path.
+
+## Merge standard
+
+A change is ready for integration when:
+
+- the intended contract is explicit;
+- tests cover the relevant behavior;
+- CI passes;
+- documentation is consistent;
+- the change does not unintentionally expand the architectural responsibility of the affected component.
+
+## Research work
+
+Research branches may contain hypotheses, experiments, or candidate implementations that are not ready for `main`.
+
+When promoting research work:
+
+1. identify the exact artifact being promoted;
+2. separate hypothesis from implementation contract;
+3. add tests for software behavior;
+4. document what remains empirically unvalidated;
+5. merge only the accepted implementation into `main`.
