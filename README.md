@@ -127,7 +127,22 @@ The repository preserves this history while keeping historical artifacts separat
 
 **Current package/runtime version: `8.6.0`.**
 
-The current `main` branch contains the executable v8.6 runtime integration, the immutable `FieldState` contract, Session C observation and controlled-evolution components, unit tests, packaging, and GitHub Actions CI.
+The current `main` branch contains the executable v8.6 runtime integration, the validated `FieldState` contract, Session C observation and controlled-evolution components, unit tests, packaging, and GitHub Actions CI. The current Runtime metrics are primarily lexical/statistical proxies; they are not validated semantic-coherence or cognition measures.
+
+### Implementation maturity at a glance
+
+| Area | Main-branch status | Evidence boundary |
+|---|---|---|
+| FieldState contract | Implemented + unit tested | Structural validation; not metric validity |
+| FieldRuntime | Executable + unit tested | Lexical/statistical proxies; semantic validity unproven |
+| Specialist governance | Executable + unit tested | Predefined weights/applicability; empirical accuracy unproven |
+| Session C observation | Implemented + unit tested | Caller-pushed ingestion; not a continuous background service |
+| Dynamic envelope | Implemented + unit tested | Configurable historical quantiles; not universal thresholds |
+| Topic inference | Implemented + unit tested | Constrained rule mapping; not general semantic topic modeling |
+| Candidate review | Implemented + unit tested | Recommendation workflow; no automatic Runtime deployment |
+| Provider adapters | Separate development work | Not part of this main baseline |
+| Durable event storage/restart recovery | Not implemented | Future engineering requirement |
+| GAP-034 evidence provenance | Contract documented on development branch | Not implemented in main |
 
 ### Current execution architecture
 
@@ -226,7 +241,7 @@ This distinction is fundamental:
 
 ## 5. Session C — independent runtime observer and controlled evolution layer
 
-Session C is a **background observer of the active system during execution**. Its architecture and implementation are deliberately separate from the Runtime that it observes.
+Session C is architecturally intended to operate as an independent observer of the active system during execution. In the current main baseline, observation is supplied through explicit caller-pushed interfaces; a continuously subscribed background service, durable event transport, and autonomous process lifecycle are not established.
 
 Its primary role is to observe execution behavior over time, accumulate an independent trajectory view, characterize dynamic change, identify whether an evolution condition is present, and—when the observation contract permits—prepare a candidate for separate testing and review.
 
@@ -281,7 +296,7 @@ The Runtime and Session C therefore have different responsibilities:
 ### What Session C currently does
 
 - observes runtime-provided execution state/events without becoming part of the Runtime's internal decision path;
-- records neutral, immutable observations;
+- records neutral observations using frozen observation records; note that the current main implementation's context protection is shallow, so nested mutable payloads are not yet deeply immutable;
 - maintains its own trajectory representation;
 - estimates dynamic envelopes from observed history;
 - evaluates threshold approach and evolution readiness;
