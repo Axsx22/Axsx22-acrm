@@ -45,5 +45,8 @@ jobs:
       - name: Run tests with coverage
         run: python -m pytest --cov=acrm_core --cov-report=term-missing --cov-report=xml -ra
 
-      - name: Audit installed dependencies
-        run: python -m pip_audit --strict --skip-editable
+      - name: Prepare third-party dependency audit input
+        run: python -m pip freeze | grep -v -E '^(acrm-core==|-e )' > /tmp/acrm-audit-requirements.txt
+
+      - name: Audit third-party dependencies
+        run: python -m pip_audit --strict -r /tmp/acrm-audit-requirements.txt
