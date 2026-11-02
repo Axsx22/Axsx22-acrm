@@ -369,3 +369,27 @@ def test_GAP_030_late_recovery_does_not_change_past_as_of_analysis():
     assert current.currently_available_evidence.sequences == (13,)
     assert current.historical_completeness.complete is True
     assert current.historical_completeness.available_sequences == 3
+
+
+def test_GAP_031_future_sequence_does_not_expand_past_analysis_scope():
+    runtime, engine = FieldRuntime(runtime_id="gap-runtime-31"), _engine()
+    engine.observe_runtime(_evaluation(runtime, 10))
+    engine.observe_runtime(_evaluation(runtime, 12))
+
+    # Freeze the historical analysis point before the next sequence arrives.
+    analysis_time = datetime.now(timezone.utc)
+    historical_before = engine.analyze(as_of=analysis_time)
+
+    engine.observe_runtime(_evaluation(runtime, 15))
+    historical_after = engine.analyze(as_of=analysis_time)
+    current = engine.analyze()
+
+    assert historical_after.historical_completeness == historical_before.historical_completeness
+    assert historical_after.historical_completeness.scope_start == 10
+    assert historical_after.historical_completeness.scope_end == 12
+    assert historical_after.historical_completeness.expected_sequences == 3
+    assert historical_after.historical_completeness.available_sequences == 2
+    assert historical_after.sequence_gaps == ()
+    assert current.historical_completeness.scope_end == 15
+    assert current.historical_completeness.expected_sequences == 6
+    assert len(current.sequence_gaps) == 1
