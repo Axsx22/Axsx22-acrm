@@ -3,6 +3,7 @@
 These tests intentionally exercise the public SessionCEngine API and observable
 analysis output. They do not inspect private storage or implementation classes.
 """
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -465,3 +466,89 @@ def test_GAP_032_all_analysis_outputs_are_isolated_from_future_receipts():
     assert current.readiness.observation_count > historical_after.readiness.observation_count
     assert current.readiness.approach.value == evaluation.field_state.metrics["S"]
     assert current.readiness.approach.value != historical_after.readiness.approach.value
+
+
+
+# GAP-033: deterministic observer order, serialized commits, and snapshot cuts.
+
+def test_GAP_033_ingest_sequence_is_independent_of_wall_clock_order(monkeypatch):
+    import acrm_core.session_c.orchestrator as orchestrator_module
+
+    real_datetime = datetime
+    clock_values = iter((
+        real_datetime(2030, 1, 1, 0, 0, 2, tzinfo=timezone.utc),
+        real_datetime(2030, 1, 1, 0, 0, 1, tzinfo=timezone.utc),
+    ))
+
+    class BackwardsClock(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            value = next(clock_values)
+            return value if tz is None else value.astimezone(tz)
+
+    monkeypatch.setattr(orchestrator_module, "datetime", BackwardsClock)
+    engine = _engine()
+    engine.current_value = 1.0
+    engine.record(EvolutionObservation(
+        "clock-first", ObservationKind.AMBIGUITY, "first",
+        real_datetime(2029, 1, 1, tzinfo=timezone.utc), {"S": 1.0},
+    ))
+    engine.record(EvolutionObservation(
+        "clock-second", ObservationKind.AMBIGUITY, "second",
+        real_datetime(2029, 1, 1, tzinfo=timezone.utc), {"S": 2.0},
+    ))
+
+    snapshot = engine.analyze(
+        as_of=real_datetime(2031, 1, 1, tzinfo=timezone.utc),
+        as_of_ingest_sequence=3,
+    )
+    assert snapshot.snapshot_ingest_sequence == 3
+    assert snapshot.readiness.observation_count == 2
+    assert engine._observation_ingest_sequence == {
+        "clock-first": 2, "clock-second": 3,
+    }
+
+
+def test_GAP_033_snapshot_cut_excludes_later_commits():
+    engine = _engine()
+    engine.current_value = 1.0
+    first_time = datetime.now(timezone.utc)
+    engine.record(EvolutionObservation(
+        "snapshot-first", ObservationKind.AMBIGUITY, "first",
+        first_time, {"S": 1.0},
+    ))
+    first = engine.analyze()
+    engine.record(EvolutionObservation(
+        "snapshot-second", ObservationKind.MISSING_CAPABILITY, "second",
+        first_time, {"S": 2.0},
+    ))
+
+    frozen = engine.analyze(as_of_ingest_sequence=first.snapshot_ingest_sequence)
+    current = engine.analyze()
+    assert frozen == first
+    assert frozen.snapshot_ingest_sequence == 2
+    assert frozen.readiness.observation_count == 1
+    assert current.snapshot_ingest_sequence == 3
+    assert current.readiness.observation_count == 2
+
+
+def test_GAP_033_concurrent_records_commit_once_and_snapshot_consistently():
+    engine = _engine()
+    engine.current_value = 1.0
+    observed_at = datetime.now(timezone.utc)
+
+    def add(index):
+        engine.record(EvolutionObservation(
+            f"concurrent-{index}", ObservationKind.AMBIGUITY,
+            f"concurrent observation {index}", observed_at,
+            {"S": float(index + 1)},
+        ))
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(add, range(32)))
+
+    snapshot = engine.analyze()
+    assert snapshot.snapshot_ingest_sequence == 33
+    assert snapshot.readiness.observation_count == 32
+    assert snapshot.envelope.sample_count == 32
+    assert len(engine.observations) == 32
