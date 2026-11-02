@@ -172,10 +172,18 @@ class SessionCEngine:
         generator, tester, vote_provider,
     ) -> None:
         self._observation_log = ObservationLog()
+        initialized_at = datetime.now(timezone.utc)
+        self._observation_received_at: dict[str, datetime] = {}
         for observation in observations:
-            self._observation_log.record(observation)
+            if self._observation_log.record(observation):
+                self._observation_received_at[observation.observation_id] = initialized_at
         self.metric_name = metric_name
-        self.current_value = current_value
+        initialized_at = datetime.now(timezone.utc)
+        self._observation_received_at: dict[str, datetime] = {}
+        self._current_value_history: list[tuple[float, datetime]] = []
+        self._current_value = current_value
+        if current_value is not None:
+            self._current_value_history.append((float(current_value), initialized_at))
         self.min_observations = min_observations
         self.persistence_floor = persistence_floor
         self.warning_quantile = warning_quantile
@@ -196,6 +204,17 @@ class SessionCEngine:
         self._late_recovery_records: tuple[LateRecoveryRecord, ...] = ()
         self._late_recovery_index: dict[tuple[str, int], LateRecoveryRecord] = {}
         self._closed = False
+
+    @property
+    def current_value(self) -> float | None:
+        return self._current_value
+
+    @current_value.setter
+    def current_value(self, value: float | None) -> None:
+        received_at = datetime.now(timezone.utc)
+        self._current_value = value
+        if value is not None:
+            self._current_value_history.append((float(value), received_at))
 
     @property
     def observations(self) -> tuple[EvolutionObservation, ...]:
@@ -222,7 +241,10 @@ class SessionCEngine:
         if self._runtime_identity is not None:
             if not observation.observation_id.startswith(f"{self._runtime_identity[1]}:"):
                 raise ValueError("observation does not belong to this Session C identity")
-        self._observation_log.record(observation)
+        received_at = datetime.now(timezone.utc)
+        added = self._observation_log.record(observation)
+        if added:
+            self._observation_received_at[observation.observation_id] = received_at
 
     def _validate_evaluation(self, evaluation: RuntimeEvaluation):
         if not isinstance(evaluation, RuntimeEvaluation):
@@ -272,14 +294,23 @@ class SessionCEngine:
                 start, end, self._last_sequence, sequence, now, str(uuid4()), states,
             ))
         # All validation and derived objects are prepared before the log mutation.
+        known_observation_ids = {
+            item.observation_id for item in self._observation_log.snapshot()
+        }
+        staged_observation_receipts = dict(self._observation_received_at)
+        for item in evaluation.observations:
+            if item.observation_id not in known_observation_ids:
+                staged_observation_receipts[item.observation_id] = now
         added = self._observation_log.record_many(evaluation.observations)
+        self._observation_received_at = staged_observation_receipts
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
         self._accepted_sequences[sequence] = (fingerprint, now)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
-            self.current_value = metric_value
+            self._current_value = metric_value
+            self._current_value_history.append((metric_value, now))
         return added
 
     def _find_gap(self, sequence: int) -> SequenceGap:
@@ -401,14 +432,29 @@ class SessionCEngine:
         if evaluated_at.tzinfo is None or evaluated_at.utcoffset() is None:
             raise ValueError("analysis as_of must be timezone-aware")
         evaluated_at = evaluated_at.astimezone(timezone.utc)
-        items = self.observations
+        # Every observation-derived output is computed from records received
+        # by the observer no later than evaluated_at. Event timestamps are
+        # retained as evidence, but do not establish when Session C knew them.
+        items = tuple(
+            item for item in self.observations
+            if self._observation_received_at.get(item.observation_id, evaluated_at)
+            <= evaluated_at
+        )
+        known_values = [
+            (value, received_at)
+            for value, received_at in self._current_value_history
+            if received_at <= evaluated_at
+        ]
+        if not known_values:
+            raise ValueError("current_value is not available as of requested analysis time")
+        historical_current_value = max(known_values, key=lambda item: item[1])[0]
         envelope = FieldEnvelopeEstimator().estimate(
             items, metric_name=self.metric_name,
             warning_quantile=self.warning_quantile,
             critical_quantile=self.critical_quantile, direction=self.direction,
         )
         readiness = DynamicReadinessEvaluator().evaluate(
-            items, envelope=envelope, current_value=self.current_value,
+            items, envelope=envelope, current_value=historical_current_value,
             min_observations=self.min_observations,
             persistence_floor=self.persistence_floor, direction=self.direction,
         )
