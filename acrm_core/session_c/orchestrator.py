@@ -275,7 +275,7 @@ class SessionCEngine:
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
-        self._accepted_sequences[sequence] = (fingerprint, evaluation.field_state.timestamp)
+        self._accepted_sequences[sequence] = (fingerprint, now)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
             self.current_value = metric_value
