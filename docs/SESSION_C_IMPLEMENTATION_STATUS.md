@@ -19,7 +19,7 @@ Session C is an independent, continuously operating Runtime observer and control
 | Dynamic envelope | Derives quantile limits from numeric values in observation context. | No online windowing/decay or empirical calibration contract is established. |
 | Readiness evaluator | Combines observation count, threshold state, and the current persistence descriptor. | Current gate is not yet the complete evidence-sufficiency decision described by the target architecture. |
 | Topic engine | Maps constrained observation kinds to a small topic taxonomy. | Not a general semantic topic model. |
-| Session C orchestrator | Accepts caller-pushed RuntimeEvaluation batches; enforces Runtime/Session/Field identity, monotonic sequence ordering, exact replay idempotency, and explicit gap recovery. | No background subscription/event bus, durable storage, restart recovery, or concurrent-ingestion guarantee. |
+| Session C orchestrator | Accepts caller-pushed RuntimeEvaluation batches; enforces Runtime/Session/Field identity, monotonic sequence ordering, exact replay idempotency, and explicit gap recovery. | No background subscription/event bus, durable storage, restart recovery, cross-process coordination, or distributed-ingestion guarantee. |
 | Evolution candidate | Represents generated source and evidence IDs. | No immutable artifact store or content-hash/provenance ledger. |
 | Candidate tester | Calls an injected tester and gates review on successful results. | The core does not provide sandboxing, process isolation, resource limits, or test artifact retention. |
 | Weighted review | Aggregates reliability/relevance-weighted specialist votes. | Vote weights require validation; this is not execution authorization. |
@@ -81,7 +81,7 @@ Runtime Injection             Version Switch
 ### Observation history and continuity
 The canonical observation type and in-memory log exist. Runtime evaluation emits observation records, and `SessionCEngine.observe_runtime()` accepts caller-pushed evaluation batches. Normal ingestion is strictly monotonic: exact full-payload replay is idempotent, conflicting replay is rejected, and a forward sequence jump creates an immutable-range Gap with per-sequence OPEN state. Late events are rejected from normal ingestion and must use one of two explicit paths: `compensate_gap()` for OPEN members, or `record_late_recovery()` for members already declared UNRECOVERABLE. Partial recovery never shrinks or splits the original Gap. Gap status is derived from member states; audit events and late-recovery records are exposed as immutable snapshots. Analysis distinguishes time-scoped historical completeness from currently available recovered evidence.
 
-This remains caller-pushed ingestion, not a background observer: automatic Runtime event subscription, durable storage, restart recovery, and thread-safe concurrent ingestion are not implemented.
+This remains caller-pushed ingestion, not a background observer: automatic Runtime event subscription, durable storage, restart recovery, and cross-process or distributed ingestion coordination are not implemented. In-process state transitions and snapshots are serialized under the GAP-033 lock.
 
 ### Historical analysis consistency — GAP-032
 
