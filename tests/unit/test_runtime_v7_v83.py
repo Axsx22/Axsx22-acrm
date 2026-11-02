@@ -3,7 +3,11 @@ from datetime import datetime, timezone
 import pytest
 
 from acrm_core.runtime import FieldRuntime, SpecialistGovernance, parse_conversation
-from acrm_core.runtime.failure_taxonomy import Calibration, FAILURE_MODES, run_calibration_checks
+from acrm_core.runtime.failure_taxonomy import (
+    FAILURE_MODES,
+    Calibration,
+    run_calibration_checks,
+)
 
 
 def test_v7_failure_taxonomy_and_calibration_are_promoted():
