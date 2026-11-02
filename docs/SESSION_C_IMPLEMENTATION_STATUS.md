@@ -83,6 +83,21 @@ The canonical observation type and in-memory log exist. Runtime evaluation emits
 
 This remains caller-pushed ingestion, not a background observer: automatic Runtime event subscription, durable storage, restart recovery, and thread-safe concurrent ingestion are not implemented.
 
+### Historical analysis consistency — GAP-032
+
+`SessionCEngine.analyze(as_of=T)` now scopes every observation-derived analysis component to records received by the observer no later than T:
+
+- observation history used by the dynamic envelope;
+- trajectory counts and numeric signal persistence used by readiness;
+- the Runtime metric value used for threshold approach/readiness;
+- topic inference.
+
+The observer receipt timestamp is distinct from the event's `observed_at` / Runtime event timestamp. A late-arriving event whose event timestamp predates T is still excluded from the T snapshot if Session C received it after T. Constructor-supplied observations and the constructor's initial `current_value` are treated as known at engine initialization. Later direct `record()` calls and accepted Runtime evaluations receive observer-side receipt timestamps. Runtime metric values are retained as a time-ordered in-memory history so a historical analysis uses the latest value known by T.
+
+GAP-032 verifies that a single historical analysis remains identical after later Runtime sequence delivery and later observation receipt, while the current analysis reflects the new topic evidence, envelope distribution, observation count, and Runtime metric value.
+
+This is an in-memory observer-time contract, not durable event sourcing: receipt metadata and value history are lost on process restart, concurrent ingestion is not made thread-safe, and an `as_of` earlier than the engine's initialization cannot use the constructor's initial state. Persistence and restart reconstruction remain separate work.
+
 ### Persistence
 Current trajectory persistence is based on adjacent repeated observation kinds. It must not be presented as persistence of the underlying numerical signal. A separate signal-level measure, with a declared window, direction, missing-data policy, and minimum evidence requirements, is needed.
 
