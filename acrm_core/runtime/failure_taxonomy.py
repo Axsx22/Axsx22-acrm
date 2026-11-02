@@ -7,9 +7,9 @@ without carrying over browser/UI state or simulated presentation values.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import Enum
-import math
 from typing import Sequence
 
 
