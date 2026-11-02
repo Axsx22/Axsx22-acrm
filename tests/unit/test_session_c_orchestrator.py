@@ -188,11 +188,16 @@ def test_sequence_gap_is_recorded_and_late_event_compensates_it():
     assert gap.next_sequence == 14
     assert gap.status == "open"
 
-    engine.observe_runtime(seq13)
+    before = engine.observations
+    with pytest.raises(ValueError, match="out-of-order|late|recovery"):
+        engine.observe_runtime(seq13)
+    assert engine.observations == before
+
+    assert engine.compensate_gap(seq13, source="explicit-replay") is True
     gap = engine.sequence_gaps[0]
-    assert gap.status == "compensated"
-    assert gap.resolved_at is not None
-    assert engine.observations[-1].observation_id.startswith("gap-session:13:")
+    assert gap.status == "COMPENSATED"
+    assert gap.sequence_states[13] == "COMPENSATED"
+    assert engine.observations == before
 
 
 def test_same_sequence_with_changed_full_payload_is_a_conflict():
