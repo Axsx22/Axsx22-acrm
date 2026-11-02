@@ -112,7 +112,7 @@ class Calibration:
     def softmax(scores: Sequence[float]) -> tuple[float, ...]:
         if not scores:
             raise ValueError("softmax input cannot be empty")
-        values = [float(s) for s in scores]
+        values = [Calibration._finite_numeric(score, "softmax score") for score in scores]
         if not all(math.isfinite(s) for s in values):
             raise ValueError("softmax scores must be finite")
         maximum = max(values)
