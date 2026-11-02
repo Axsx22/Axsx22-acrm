@@ -389,7 +389,11 @@ def test_GAP_031_future_sequence_does_not_expand_past_analysis_scope():
     assert historical_after.historical_completeness.scope_end == 12
     assert historical_after.historical_completeness.expected_sequences == 3
     assert historical_after.historical_completeness.available_sequences == 2
-    assert historical_after.sequence_gaps == ()
+    assert len(historical_after.sequence_gaps) == 1
+    assert (historical_after.sequence_gaps[0].start_sequence,
+            historical_after.sequence_gaps[0].end_sequence) == (11, 11)
     assert current.historical_completeness.scope_end == 15
     assert current.historical_completeness.expected_sequences == 6
-    assert len(current.sequence_gaps) == 1
+    assert len(current.sequence_gaps) == 2
+    assert (current.sequence_gaps[-1].start_sequence,
+            current.sequence_gaps[-1].end_sequence) == (13, 14)
