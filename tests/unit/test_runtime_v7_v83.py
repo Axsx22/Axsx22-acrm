@@ -144,3 +144,44 @@ def test_runtime_labels_legacy_governance_confidence_as_lexical_proxy():
     proxy = result.field_state.metrics["lexical_entropy_complement"]
     assert proxy == pytest.approx(1.0 - result.last_entropy)
     assert result.field_state.governance_confidence == pytest.approx(proxy)
+
+def test_parse_conversation_preserves_multiline_role_messages():
+    turns = parse_conversation(
+        "user: first line\\n"
+        "second line\\n"
+        "\\n"
+        "third paragraph\\n"
+        "model: response line\\n"
+        "continued response"
+    )
+    assert len(turns) == 2
+    assert turns[0].role == "user"
+    assert turns[0].text == "first line\\nsecond line\\n\\nthird paragraph"
+    assert turns[1].role == "model"
+    assert turns[1].text == "response line\\ncontinued response"
+
+
+def test_parse_conversation_rejects_non_string_input():
+    with pytest.raises(TypeError, match="must be a string"):
+        parse_conversation(None)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_runtime_thresholds_reject_boolean_values(value):
+    with pytest.raises(TypeError, match="numeric"):
+        FieldRuntime(centroid_alpha=value)
+    with pytest.raises(TypeError, match="numeric"):
+        FieldRuntime(anomaly_threshold=value)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_runtime_thresholds_reject_non_finite_values(value):
+    with pytest.raises(ValueError, match="finite"):
+        FieldRuntime(centroid_alpha=value)
+    with pytest.raises(ValueError, match="finite"):
+        FieldRuntime(anomaly_threshold=value)
+
+
+def test_softmax_rejects_boolean_scores():
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.softmax((1.0, True))
