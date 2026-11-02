@@ -367,4 +367,5 @@ def test_GAP_030_late_recovery_does_not_change_past_as_of_analysis():
     assert historical.historical_completeness == before.historical_completeness
     assert historical.currently_available_evidence.count == 0
     assert current.currently_available_evidence.sequences == (13,)
-    assert current.historical_completeness == before.historical_completeness
+    assert current.historical_completeness.complete is True
+    assert current.historical_completeness.available_sequences == 3
