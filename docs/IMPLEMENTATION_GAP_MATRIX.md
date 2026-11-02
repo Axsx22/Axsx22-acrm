@@ -20,7 +20,13 @@
 
 | Capability / claim | Current state | Evidence | Remaining work |
 |---|---|---|---|
-| Immutable FieldState contract | Implemented + Tested | `acrm_core/field/state.py`, unit tests | None for current contract; extend only with new requirements. |
+| Immutable FieldState contract | Implemented + Tested | `acrm_core/field/state.py`, unit tests | The schema is structurally validated; the Runtime's current `governance_confidence` population is a lexical-entropy complement proxy, not calibrated confidence. See `docs/RUNTIME_MEASUREMENT_SEMANTICS.md`. |
+| Runtime lexical similarity / centroid coherence / alignment gap | Implemented + Tested | `acrm_core/runtime/field_runtime.py` | Lexical-overlap proxies only; compare with semantic/intent-aware baselines and labeled trajectory changes. |
+| Runtime lexical entropy | Implemented + Tested | `_entropy()` in `acrm_core/runtime/field_runtime.py` | Do not interpret as model uncertainty or semantic entropy; validate against a separately defined construct if needed. |
+| Runtime anomaly / resilience descriptors | Implemented + Tested | EMA deviation and derived resilience in `FieldRuntime.evaluate()` | Establish whether these proxies predict meaningful labeled trajectory changes. |
+| Built-in Specialist applicability and default reports | Implemented + Tested + Evolving | `acrm_core/runtime/specialist_governance.py` | Keyword matching and hand-authored thresholds are heuristics; evaluate domain coverage and error rates on independent labeled cases. |
+| Built-in specialist reliability weights | Implemented + Configured | `SPECIALISTS` constants and weighted vote calculation | Values are fixed configuration weights, not empirically estimated specialist accuracy; validate or relabel before probabilistic interpretation. |
+| Numerical calibration sanity checks | Implemented + Tested | `run_calibration_checks()` | Fixed-input numerical checks only; do not claim empirical probability calibration without labeled outcome evaluation. |
 | Neutral Session C observation boundary | Implemented + Tested | `acrm_core/session_c/observation.py`, boundary tests | Add integration coverage as external producers are introduced. |
 | Temporal trajectory profiling | Implemented + Tested + Evolving | `TrajectoryAnalyzer`, dynamic tests | Refine descriptors where required and validate against real longitudinal datasets. |
 | Field-relative dynamic envelope | Implemented + Tested + Evolving | `FieldEnvelopeEstimator`, dynamic tests | Empirically calibrate quantiles across models, tasks, and signal distributions. |
