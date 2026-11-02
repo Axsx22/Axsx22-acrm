@@ -198,6 +198,8 @@ The integrated runtime includes:
 
 Historical browser/UI implementations remain preserved as evidence and lineage; the current executable source is represented in the Python core.
 
+**Measurement semantics:** Current Runtime similarity, coherence, alignment-gap, and entropy outputs are lexical/statistical proxies. The legacy `FieldState.governance_confidence` value is populated from the complement of normalized lexical entropy; it is not a calibrated probability or specialist-consensus score. Built-in specialist reliability values and domain rules are fixed heuristics, not empirically measured accuracy estimates. See [docs/RUNTIME_MEASUREMENT_SEMANTICS.md](docs/RUNTIME_MEASUREMENT_SEMANTICS.md) for definitions, limitations, and required validation.
+
 ---
 
 ## 4. FieldState: canonical observation contract
