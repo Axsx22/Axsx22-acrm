@@ -14,7 +14,7 @@ coverage, and domain validity have not been established by this module.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping
 
 
