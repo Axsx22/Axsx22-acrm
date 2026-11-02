@@ -91,3 +91,25 @@ def test_runtime_governance_state_is_isolated_by_session_id():
     assert first_a.governance.accumulator == first_b.governance.accumulator
     assert second_a.governance.accumulator == second_b.governance.accumulator
     assert second_a.governance.accumulator != first_a.governance.accumulator
+
+@pytest.mark.parametrize(
+    ("errors", "total", "exception"),
+    [
+        (-1, 10, ValueError),
+        (0, -1, ValueError),
+        (11, 10, ValueError),
+        (1.5, 10, TypeError),
+        (1, 10.0, TypeError),
+        (True, 1, TypeError),
+        (1, False, TypeError),
+    ],
+)
+def test_laplace_rejects_invalid_count_inputs(errors, total, exception):
+    with pytest.raises(exception):
+        Calibration.laplace(errors, total)
+
+
+def test_laplace_accepts_valid_boundary_counts():
+    assert Calibration.laplace(0, 0) == 1.0
+    assert Calibration.laplace(0, 10) == pytest.approx(1 / 12)
+    assert Calibration.laplace(10, 10) == pytest.approx(11 / 12)
