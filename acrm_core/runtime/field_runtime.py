@@ -168,7 +168,7 @@ class FieldRuntime:
             session_id=session_id,
             sequence=sequence,
             timestamp=now,
-            metrics={"S": avg_s, "rho": avg_rho, "delta": avg_delta, "H": last_h, "RS": resilience, "A": governance.accumulator},
+            metrics={"S": avg_s, "rho": avg_rho, "delta": avg_delta, "H": last_h, "RS": resilience, "A": governance.accumulator, "lexical_entropy_complement": lexical_entropy_complement},
             failure_modes=tuple(active),
             governance_confidence=lexical_entropy_complement,
         )
