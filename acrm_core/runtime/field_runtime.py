@@ -29,13 +29,41 @@ class Turn:
 
 
 def parse_conversation(raw: str) -> tuple[Turn, ...]:
+    """Parse role-prefixed turns while preserving multiline message bodies.
+
+    Unprefixed non-empty lines before the first explicit role marker retain
+    the legacy behavior and are treated as individual user turns. Once a
+    role-prefixed turn begins, subsequent unprefixed lines (including blank
+    lines) belong to that message until the next role marker.
+    """
+    if not isinstance(raw, str):
+        raise TypeError("raw conversation must be a string")
+
     turns: list[Turn] = []
+    active_role: str | None = None
+    active_lines: list[str] = []
+
+    def flush_active() -> None:
+        nonlocal active_role, active_lines
+        if active_role is not None:
+            body = "\n".join(active_lines).strip()
+            if body:
+                turns.append(Turn(active_role, body))
+        active_role = None
+        active_lines = []
+
     for line in raw.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        match = re.match(r"^(user|model)\s*:\s*(.*)$", line, flags=re.IGNORECASE)
-        turns.append(Turn(match.group(1).lower(), match.group(2)) if match else Turn("user", line))
+        match = re.match(r"^(user|model)\s*:\s*(.*)$", line.strip(), flags=re.IGNORECASE)
+        if match:
+            flush_active()
+            active_role = match.group(1).lower()
+            active_lines = [match.group(2)]
+        elif active_role is not None:
+            active_lines.append(line)
+        elif line.strip():
+            turns.append(Turn("user", line.strip()))
+
+    flush_active()
     return tuple(turns)
 
 
@@ -96,9 +124,14 @@ class FieldRuntime:
     """
 
     def __init__(self, *, runtime_id: str | None = None, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
-        if not 0.0 < centroid_alpha <= 1.0:
+        for name, value in (("centroid_alpha", centroid_alpha), ("anomaly_threshold", anomaly_threshold)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError(f"{name} must be numeric")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+        if not 0.0 < float(centroid_alpha) <= 1.0:
             raise ValueError("centroid_alpha must be in (0, 1]")
-        if anomaly_threshold < 0.0:
+        if float(anomaly_threshold) < 0.0:
             raise ValueError("anomaly_threshold must be non-negative")
         if runtime_id is not None and (not isinstance(runtime_id, str) or not runtime_id.strip()):
             raise ValueError("runtime_id must be a non-empty string when supplied")
