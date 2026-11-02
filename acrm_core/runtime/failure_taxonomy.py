@@ -60,17 +60,33 @@ class Calibration:
     RISK_S0 = 0.65
 
     @staticmethod
+    def _finite_numeric(value: float, name: str) -> float:
+        if isinstance(value, bool):
+            raise TypeError(f"{name} must be numeric, not bool")
+        try:
+            converted = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise TypeError(f"{name} must be convertible to a finite number") from exc
+        if not math.isfinite(converted):
+            raise ValueError(f"{name} must be finite")
+        return converted
+
+    @staticmethod
     def _sigmoid(z: float) -> float:
+        # Finite inputs may overflow during multiplication; saturation is
+        # intentional here, while NaN is rejected at the public input boundary.
         z = max(-500.0, min(500.0, float(z)))
         return 1.0 / (1.0 + math.exp(-z))
 
     @classmethod
     def platt(cls, raw: float) -> float:
-        return cls._sigmoid(cls.PLATT_A * float(raw) + cls.PLATT_B)
+        value = cls._finite_numeric(raw, "raw")
+        return cls._sigmoid(cls.PLATT_A * value + cls.PLATT_B)
 
     @classmethod
     def sigmoid_risk(cls, stability: float) -> float:
-        return cls._sigmoid(cls.RISK_K * (float(stability) - cls.RISK_S0))
+        value = cls._finite_numeric(stability, "stability")
+        return cls._sigmoid(cls.RISK_K * (value - cls.RISK_S0))
 
     @staticmethod
     def laplace(errors: int, total: int) -> float:
