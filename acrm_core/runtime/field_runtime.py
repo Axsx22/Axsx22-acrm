@@ -8,16 +8,16 @@ state are deliberately excluded.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from uuid import uuid4
-from datetime import datetime, timezone
 import math
 import re
-from typing import Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from acrm_core.field.state import FieldState
 from acrm_core.session_c.observation import EvolutionObservation, ObservationKind
-from .failure_taxonomy import Calibration, FAILURE_MODES
+from .failure_taxonomy import FAILURE_MODES, Calibration
 from .specialist_governance import GovernanceResult, SpecialistGovernance
 
 
@@ -33,7 +33,7 @@ def parse_conversation(raw: str) -> tuple[Turn, ...]:
         line = line.strip()
         if not line:
             continue
-        match = re.match(r"^(user|model)\s*:\s*(.*)$", line, flags=re.I)
+        match = re.match(r"^(user|model)\s*:\s*(.*)$", line, flags=re.IGNORECASE)
         turns.append(Turn(match.group(1).lower(), match.group(2)) if match else Turn("user", line))
     return tuple(turns)
 
