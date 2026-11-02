@@ -117,3 +117,30 @@ def test_laplace_accepts_valid_boundary_counts():
     assert Calibration.laplace(0, 0) == 1.0
     assert Calibration.laplace(0, 10) == pytest.approx(1 / 12)
     assert Calibration.laplace(10, 10) == pytest.approx(11 / 12)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_calibration_rejects_non_finite_inputs(value):
+    with pytest.raises(ValueError, match="finite"):
+        Calibration.platt(value)
+    with pytest.raises(ValueError, match="finite"):
+        Calibration.sigmoid_risk(value)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_calibration_rejects_boolean_inputs(value):
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.platt(value)
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.sigmoid_risk(value)
+
+
+def test_runtime_labels_legacy_governance_confidence_as_lexical_proxy():
+    turns = (
+        {"role": "user", "text": "Explain the system failure and recovery."},
+        {"role": "model", "text": "The system failure has a recovery path."},
+    )
+    result = FieldRuntime().evaluate(turns, session_id="proxy-semantics")
+    proxy = result.field_state.metrics["lexical_entropy_complement"]
+    assert proxy == pytest.approx(1.0 - result.last_entropy)
+    assert result.field_state.governance_confidence == pytest.approx(proxy)
