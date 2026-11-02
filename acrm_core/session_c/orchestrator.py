@@ -441,7 +441,7 @@ class SessionCEngine:
             sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
             if recorded_at <= evaluated_at
         } | {
-            record.sequence for record in self._late_recovery_records.values()
+            record.sequence for record in self._late_recovery_records
             if record.recorded_at <= evaluated_at
         }))
         current_evidence = CurrentlyAvailableEvidence(
