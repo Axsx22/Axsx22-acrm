@@ -108,6 +108,10 @@ class FieldRuntime:
             self._governance_by_session[session_id] = instance
         return self._governance_by_session[session_id]
 
+    def close_session(self, session_id: str) -> bool:
+        """Release in-memory governance state for a completed Runtime session."""
+        return self._governance_by_session.pop(session_id, None) is not None
+
     def evaluate(self, turns: Iterable[Turn | Mapping[str, str]], *, field_id: str = "runtime", session_id: str = "runtime", sequence: int = 0, timestamp: datetime | None = None) -> RuntimeEvaluation:
         normalized = tuple(t if isinstance(t, Turn) else Turn(str(t.get("role", "user")), str(t.get("text", ""))) for t in turns)
         if len(normalized) < 2:

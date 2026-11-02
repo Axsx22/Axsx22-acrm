@@ -292,7 +292,7 @@ Runtime Injection           Version Switch
 
 The current code contains the observation data type and in-memory log, trajectory and dynamic-envelope primitives, constrained topic inference, candidate representation, callback-based generation/testing, and weighted review. Runtime evaluation also emits observation records.
 
-However, `SessionCEngine` can be initialized from historical observations and can also accept later RuntimeEvaluation objects through an explicit caller-pushed adapter. The full autonomous background Runtime → Session C subscription, durable independent history, complete evidence-sufficiency contract, Runtime Injection/Version Switch route selection, user/automatic authorization, controlled execution, and rollback are **not yet implemented**.
+However, the current `SessionCEngine` is initialized from a supplied observation collection and snapshots it. The full live Runtime → Session C event subscription, durable independent history, complete evidence-sufficiency contract, Runtime Injection/Version Switch route selection, user/automatic authorization, controlled execution, and rollback are **not yet implemented**.
 
 The current candidate tester is an injected callback; the core does not provide a code-execution sandbox. Current trajectory persistence based on repeated observation kinds must not be interpreted as numerical signal persistence or semantic/behavioral persistence.
 

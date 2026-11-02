@@ -255,7 +255,7 @@ The current `main` branch contains useful Session C building blocks, but it does
 | Neutral observation record and duplicate-ID log | Implemented; log is in-memory |
 | Runtime evaluation output containing observation records | Implemented |
 | Automatic continuous Runtime → Session C event subscription | Not implemented |
-| Explicit live-ingestion API on `SessionCEngine` | Implemented as caller-pushed `record()` / `observe_runtime()`; no background subscription or durable transport |
+| Live ingestion API on `SessionCEngine` | Not implemented in the current snapshot-based engine |
 | Durable independent evolution history | Not implemented |
 | Trajectory descriptors and dynamic envelope | Implemented in constrained form; calibration and signal-level persistence need further validation |
 | Constrained topic inference | Implemented |

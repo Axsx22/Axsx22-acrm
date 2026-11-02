@@ -91,13 +91,33 @@ class ObservationLog:
         self._items: list[EvolutionObservation] = []
         self._ids: set[str] = set()
 
-    def record(self, observation: EvolutionObservation) -> None:
-        if not isinstance(observation, EvolutionObservation):
-            raise TypeError("observation must be an EvolutionObservation")
-        if observation.observation_id in self._ids:
-            raise ValueError(f"duplicate observation_id: {observation.observation_id}")
-        self._items.append(observation)
-        self._ids.add(observation.observation_id)
+    def record(self, observation: EvolutionObservation) -> bool:
+        return self.record_many((observation,)) == 1
+
+    def record_many(self, observations) -> int:
+        """Atomically append a batch; exact replays are idempotent."""
+        batch = tuple(observations)
+        seen = {}
+        for item in batch:
+            if not isinstance(item, EvolutionObservation):
+                raise TypeError("all observations must be EvolutionObservation instances")
+            prior = seen.get(item.observation_id)
+            if prior is not None and prior != item:
+                raise ValueError(f"conflicting observation_id in batch: {item.observation_id}")
+            seen[item.observation_id] = item
+
+        pending = []
+        for observation_id, item in seen.items():
+            if observation_id in self._ids:
+                existing = next(x for x in self._items if x.observation_id == observation_id)
+                if existing != item:
+                    raise ValueError(f"conflicting observation_id: {observation_id}")
+            else:
+                pending.append(item)
+
+        self._items.extend(pending)
+        self._ids.update(item.observation_id for item in pending)
+        return len(pending)
 
     def snapshot(self) -> tuple[EvolutionObservation, ...]:
         return tuple(self._items)

@@ -57,34 +57,70 @@ class SessionCEngine:
             vote_provider=vote_provider,
         )
         self._forwarded_ids: set[str] = set()
+        self._runtime_identity = None
+        self._runtime_batches = {}
+        self._last_sequence = None
+        self._closed = False
 
     @property
     def observations(self) -> tuple[EvolutionObservation, ...]:
         return self._observation_log.snapshot()
 
     def record(self, observation: EvolutionObservation) -> None:
-        """Append one new observation to Session C's independent history."""
+        if self._closed:
+            raise RuntimeError("Session C session is closed")
+        if self._runtime_identity is not None:
+            if not observation.observation_id.startswith(f"{self._runtime_identity[1]}:"):
+                raise ValueError("observation does not belong to this Session C identity")
         self._observation_log.record(observation)
 
     def observe_runtime(self, evaluation: RuntimeEvaluation) -> int:
-        """Ingest one RuntimeEvaluation; caller supplies each emitted event.
-
-        This adapter is not a background subscription or durable transport.
-        """
+        """Atomically ingest events for one bound (Runtime ID, Session ID)."""
+        if self._closed:
+            raise RuntimeError("Session C session is closed")
         if not isinstance(evaluation, RuntimeEvaluation):
             raise TypeError("evaluation must be a RuntimeEvaluation")
+        runtime_id = evaluation.field_state.field_id
+        session_id = evaluation.field_state.session_id
+        sequence = evaluation.field_state.sequence
+        if not runtime_id or not session_id or sequence < 0:
+            raise ValueError("Runtime identity and non-negative sequence are required")
+        identity = (runtime_id, session_id)
+        if self._runtime_identity is None:
+            self._runtime_identity = identity
+        elif self._runtime_identity != identity:
+            raise ValueError("RuntimeEvaluation belongs to a different Runtime/Session; use a separate SessionCEngine")
         if self.metric_name not in evaluation.field_state.metrics:
-            raise ValueError(
-                f"Runtime FieldState does not contain metric {self.metric_name!r}"
-            )
-        added = 0
-        for observation in evaluation.observations:
-            self.record(observation)
-            added += 1
-        self.current_value = float(evaluation.field_state.metrics[self.metric_name])
+            raise ValueError(f"Runtime FieldState does not contain metric {self.metric_name!r}")
+        metric_value = float(evaluation.field_state.metrics[self.metric_name])
+        import math
+        if not math.isfinite(metric_value):
+            raise ValueError("Runtime metric value must be finite")
+        batch_key = (runtime_id, session_id, sequence)
+        fingerprint = (tuple(item.observation_id for item in evaluation.observations), metric_value)
+        previous = self._runtime_batches.get(batch_key)
+        if previous is not None:
+            if previous != fingerprint:
+                raise ValueError("conflicting replay for Runtime sequence")
+            return 0
+        if self._last_sequence is not None and sequence <= self._last_sequence:
+            raise ValueError("out-of-order Runtime sequence")
+        for item in evaluation.observations:
+            if not item.observation_id.startswith(f"{session_id}:{sequence}:"):
+                raise ValueError("Runtime observation identity does not match its batch")
+        added = self._observation_log.record_many(evaluation.observations)
+        self._runtime_batches[batch_key] = fingerprint
+        self._last_sequence = sequence
+        self.current_value = metric_value
         return added
 
+    def close(self) -> None:
+        """Close this in-memory observer; durable recovery is not provided."""
+        self._closed = True
+
     def analyze(self) -> SessionCAnalysis:
+        if self._closed:
+            raise RuntimeError("Session C session is closed")
         if self.current_value is None:
             raise ValueError("current_value is required before Session C analysis")
         items = self.observations
