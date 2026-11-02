@@ -5,7 +5,7 @@ All notable repository changes are recorded here. Version labels distinguish imp
 ## [Unreleased]
 
 ### Fixed
-- Reject invalid Laplace count pairs where errors exceed total, including Boolean and non-integer counts.
+- Preserve multiline content within role-prefixed conversation turns instead of splitting continuation lines into separate user turns.\n- Reject Boolean and non-finite Runtime threshold configuration and Boolean softmax scores.\n- Reject invalid Laplace count pairs where errors exceed total, including Boolean and non-integer counts.
 - Reject non-finite and Boolean inputs in Platt and sigmoid-risk calibration helpers.
 - Remove an unnecessary optional dependency constraint that caused Python 3.10 CI installation failure.
 - Preserve strict Session C tester-result and unique-specialist vote checks with direct regression coverage.
