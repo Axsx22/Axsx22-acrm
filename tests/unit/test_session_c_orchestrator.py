@@ -186,7 +186,7 @@ def test_sequence_gap_is_recorded_and_late_event_compensates_it():
     assert (gap.start_sequence, gap.end_sequence) == (13, 13)
     assert gap.previous_sequence == 12
     assert gap.next_sequence == 14
-    assert gap.status == "open"
+    assert gap.status == "OPEN"
 
     before = engine.observations
     with pytest.raises(ValueError, match="out-of-order|late|recovery"):
