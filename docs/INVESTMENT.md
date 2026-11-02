@@ -686,6 +686,37 @@ This is the evidence boundary that should govern the next stage.
 
 ---
 
+## Collaboration, ownership, and transfer boundaries
+
+The collaboration pathways above describe possible forms of technical and organizational support. They do not, by themselves, grant or imply transfer of project ownership, intellectual property, source-control authority, commercialization rights, or architectural decision rights.
+
+Any formal partnership, handoff, or transfer should define these items explicitly before work begins:
+
+1. **Project ownership:** whether ownership remains with the original author, is jointly held, or is assigned to another entity.
+2. **Background IP:** treatment of pre-existing research notes, architecture, code, historical artifacts, and documentation.
+3. **New contributions:** ownership and licensing of code, experiments, datasets, benchmarks, and derivative works created during the collaboration.
+4. **Use and distribution:** rights to use, modify, sublicense, distribute, publish, and commercialize the project and its derivatives.
+5. **Technical authority:** who may approve architectural changes, releases, merges, and changes to research scope.
+6. **Role of the original architect:** advisory, active technical leadership, co-development, or a separately negotiated transition.
+7. **Access and custody:** repository administration, credentials, infrastructure, datasets, experiment records, and continuity arrangements.
+8. **Exit and continuity:** treatment of unfinished work, access revocation, archival materials, and ongoing obligations if the collaboration ends.
+
+No particular transfer model is assumed by this document. These terms require a written agreement appropriate to the selected partnership.
+
+## Budget and resource-estimation status
+
+This document identifies resource categories and milestone outputs but does not yet contain a defensible monetary budget or a validated duration estimate.
+
+A budget should not be invented from repository size or architecture diagrams. It should be produced after the partner and project owner agree on:
+- model/provider list and expected token or inference volume;
+- GPU type, hours, utilization, and hosting model;
+- trace storage, retention, and privacy requirements;
+- engineering and evaluation roles and time commitments;
+- independent review or replication scope;
+- experiment count, workload length, and statistical power targets.
+
+The resulting estimate should separate one-time setup, recurring infrastructure, model/API consumption, engineering labor, evaluation/review, and contingency. Each stage should have a ceiling, deliverable, and stop/continue decision.
+
 ## Investment principle
 
 The investment proposition at the current stage is **not**:
