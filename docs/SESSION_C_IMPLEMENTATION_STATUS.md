@@ -96,7 +96,21 @@ The observer receipt timestamp is distinct from the event's `observed_at` / Runt
 
 GAP-032 verifies that a single historical analysis remains identical after later Runtime sequence delivery and later observation receipt, while the current analysis reflects the new topic evidence, envelope distribution, observation count, and Runtime metric value.
 
-This is an in-memory observer-time contract, not durable event sourcing: receipt metadata and value history are lost on process restart, concurrent ingestion is not made thread-safe, and an `as_of` earlier than the engine's initialization cannot use the constructor's initial state. Persistence and restart reconstruction remain separate work.
+This is an in-memory observer-time contract, not durable event sourcing: receipt metadata and value history are lost on process restart, and an `as_of` earlier than the engine's initialization cannot use the constructor's initial state. Persistence and restart reconstruction remain separate work.
+
+### Deterministic ingestion and snapshot boundary — GAP-033
+
+Observer receipt time and observer commit order are separate fields with separate meanings:
+
+- `received_at` is the UTC wall-clock time at which the observer accepts a transaction. It supports time-based queries such as `analyze(as_of=T)`; it is not used as a unique ordering key.
+- `ingest_sequence` is a monotonically increasing integer assigned by the observer to each accepted state-changing transaction. All observations in one accepted Runtime batch share that transaction's sequence. It records observer commit order, not Runtime event-occurrence order.
+- Runtime event time remains in the original Runtime evaluation / observation evidence. A late-arriving event can therefore have an older event timestamp but a later observer receipt time and ingestion sequence.
+
+A re-entrant in-process lock serializes direct observation receipt, Runtime batch acceptance, recovery/audit mutations, current-value updates, and analysis. Runtime batch validation and staging happen before the ObservationLog batch append; the ingestion sequence is advanced only after the batch append succeeds. Replays that do not add a new accepted transaction do not consume a new sequence. The same transaction sequence is associated with its accepted observations, Runtime sequence, and metric value.
+
+`analyze(as_of_ingest_sequence=N)` provides an explicit snapshot cut: it includes only observer transactions committed at or before N. The returned `SessionCAnalysis.snapshot_ingest_sequence` identifies the cut used. Omitting N captures the current sequence while holding the same lock, so analysis cannot observe a partially committed in-process transition. The wall-clock `as_of` filter and ingestion-sequence cut can be combined; they answer different questions and both filters apply.
+
+GAP-033 tests cover wall-clock reversal without ingestion-order reversal, an explicit historical sequence cut that excludes later records, and concurrent direct observation submissions followed by a consistent snapshot. This is process-local serialization only: it does not coordinate multiple processes, persist the sequence across restart, or establish the order in which events occurred inside Runtime.
 
 ### Persistence
 Current trajectory persistence is based on adjacent repeated observation kinds. It must not be presented as persistence of the underlying numerical signal. A separate signal-level measure, with a declared window, direction, missing-data policy, and minimum evidence requirements, is needed.
