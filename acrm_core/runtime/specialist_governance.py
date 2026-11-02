@@ -4,6 +4,12 @@ The implementation keeps the v8.3 separation: specialist applicability ->
 diagnosis/report -> weighted evidence -> balance gate -> accumulator ->
 reporting state. It never consumes hidden chain-of-thought and never mutates
 the observed interaction.
+
+The built-in specialist reliability values are fixed configuration constants,
+not empirically estimated accuracy rates. Default applicability is selected
+with keyword matching, and default reports use hand-authored metric thresholds.
+These mechanisms are deterministic heuristics; their reliability, semantic
+coverage, and domain validity have not been established by this module.
 """
 
 from __future__ import annotations
