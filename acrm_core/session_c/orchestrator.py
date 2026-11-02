@@ -277,6 +277,7 @@ class SessionCEngine:
             self._observation_received_at[observation.observation_id] = received_at
             self._observation_ingest_sequence[observation.observation_id] = next_sequence
             self._ingest_sequence = next_sequence
+            self._ingest_received_at[next_sequence] = received_at
 
     def _validate_evaluation(self, evaluation: RuntimeEvaluation):
         if not isinstance(evaluation, RuntimeEvaluation):
