@@ -14,6 +14,8 @@ import hashlib
 import json
 import math
 from typing import Iterable
+from types import MappingProxyType
+from uuid import uuid4
 
 from acrm_core.evolution.session_c import (
     EvolutionCandidate, EvolutionContext, EvolutionDecision,
@@ -61,13 +63,80 @@ def runtime_evaluation_digest(evaluation: RuntimeEvaluation) -> str:
 
 @dataclass(frozen=True, slots=True)
 class SequenceGap:
+    """Immutable gap identity/range with an immutable per-sequence state projection."""
+
     start_sequence: int
     end_sequence: int
     previous_sequence: int
     next_sequence: int
     detected_at: datetime
-    status: str = "open"
-    resolved_at: datetime | None = None
+    gap_id: str
+    sequence_states: object
+
+    def __post_init__(self) -> None:
+        if self.start_sequence < 0 or self.end_sequence < self.start_sequence:
+            raise ValueError("invalid sequence gap range")
+        expected = set(range(self.start_sequence, self.end_sequence + 1))
+        states = dict(self.sequence_states)
+        if set(states) != expected:
+            raise ValueError("sequence_states must cover the immutable original gap range")
+        if any(value not in {"OPEN", "COMPENSATED", "UNRECOVERABLE"} for value in states.values()):
+            raise ValueError("invalid sequence gap member state")
+        object.__setattr__(self, "sequence_states", MappingProxyType(states))
+
+    @property
+    def status(self) -> str:
+        states = tuple(self.sequence_states.values())
+        if all(state == "COMPENSATED" for state in states):
+            return "COMPENSATED"
+        if all(state != "OPEN" for state in states) and "UNRECOVERABLE" in states:
+            return "UNRECOVERABLE"
+        return "OPEN"
+
+
+@dataclass(frozen=True, slots=True)
+class GapAuditEvent:
+    event_id: str
+    gap_id: str
+    sequence: int
+    event_type: str
+    previous_status: str
+    new_status: str
+    occurred_at: datetime
+    reason: str | None = None
+    source: str | None = None
+    decision_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class LateRecoveryRecord:
+    recovery_id: str
+    gap_id: str
+    runtime_id: str
+    session_id: str
+    sequence: int
+    event_hash: str
+    event_timestamp: datetime
+    received_at: datetime
+    source: str
+    recorded_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class HistoricalCompleteness:
+    as_of: datetime
+    scope_start: int | None
+    scope_end: int | None
+    expected_sequences: int
+    available_sequences: int
+    complete: bool
+    ratio: float
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentlyAvailableEvidence:
+    count: int
+    sequences: tuple[int, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,10 +146,12 @@ class SessionCAnalysis:
     envelope: DynamicEnvelope
     sequence_gaps: tuple[SequenceGap, ...] = ()
     history_complete: bool = True
+    historical_completeness: HistoricalCompleteness | None = None
+    currently_available_evidence: CurrentlyAvailableEvidence = CurrentlyAvailableEvidence(0, ())
 
 
 class SessionCEngine:
-    """Independent observer and evolution coordinator; does not mutate Runtime."""
+    """Independent observer; gap recovery is explicit and in-memory/atomic."""
 
     def __init__(
         self, *, observations: Iterable[EvolutionObservation] = (),
@@ -108,36 +179,52 @@ class SessionCEngine:
         self._forwarded_ids: set[str] = set()
         self._runtime_identity = None
         self._runtime_batches = {}
+        self._accepted_sequences: dict[int, tuple[str, datetime]] = {}
         self._last_sequence = None
         self._sequence_gaps: list[SequenceGap] = []
+        self._gap_audit_events: list[GapAuditEvent] = []
+        self._compensation_records: dict[tuple[str, int], tuple[str, datetime, str]] = {}
+        self._late_recovery_records: dict[tuple[str, int], LateRecoveryRecord] = {}
         self._closed = False
 
     @property
     def observations(self) -> tuple[EvolutionObservation, ...]:
         return self._observation_log.snapshot()
 
-    def record(self, observation: EvolutionObservation) -> None:
+    @property
+    def sequence_gaps(self) -> tuple[SequenceGap, ...]:
+        return tuple(self._sequence_gaps)
+
+    @property
+    def gap_audit_events(self) -> tuple[GapAuditEvent, ...]:
+        return tuple(self._gap_audit_events)
+
+    @property
+    def late_recovery_records(self) -> tuple[LateRecoveryRecord, ...]:
+        return tuple(self._late_recovery_records.values())
+
+    def _ensure_open(self) -> None:
         if self._closed:
             raise RuntimeError("Session C session is closed")
+
+    def record(self, observation: EvolutionObservation) -> None:
+        self._ensure_open()
         if self._runtime_identity is not None:
             if not observation.observation_id.startswith(f"{self._runtime_identity[1]}:"):
                 raise ValueError("observation does not belong to this Session C identity")
         self._observation_log.record(observation)
 
-    def observe_runtime(self, evaluation: RuntimeEvaluation) -> int:
-        """Atomically ingest events for one bound (Runtime ID, Session ID)."""
-        if self._closed:
-            raise RuntimeError("Session C session is closed")
+    def _validate_evaluation(self, evaluation: RuntimeEvaluation):
         if not isinstance(evaluation, RuntimeEvaluation):
             raise TypeError("evaluation must be a RuntimeEvaluation")
         runtime_id = evaluation.runtime_id
-        if not isinstance(runtime_id, str) or not runtime_id.strip():
-            raise ValueError("RuntimeEvaluation must carry an explicit runtime_id")
         session_id = evaluation.field_state.session_id
         sequence = evaluation.field_state.sequence
-        if not runtime_id or not session_id or sequence < 0:
-            raise ValueError("Runtime identity and non-negative sequence are required")
         field_id = evaluation.field_state.field_id
+        if not isinstance(runtime_id, str) or not runtime_id.strip():
+            raise ValueError("RuntimeEvaluation must carry an explicit runtime_id")
+        if not isinstance(session_id, str) or not session_id.strip() or sequence < 0:
+            raise ValueError("Runtime identity and non-negative sequence are required")
         if not isinstance(field_id, str) or not field_id.strip():
             raise ValueError("RuntimeEvaluation must carry an explicit field_id")
         identity = (runtime_id, session_id, field_id)
@@ -146,78 +233,163 @@ class SessionCEngine:
         if self.metric_name not in evaluation.field_state.metrics:
             raise ValueError(f"Runtime FieldState does not contain metric {self.metric_name!r}")
         metric_value = float(evaluation.field_state.metrics[self.metric_name])
-        import math
         if not math.isfinite(metric_value):
             raise ValueError("Runtime metric value must be finite")
+        for item in evaluation.observations:
+            if not item.observation_id.startswith(f"{session_id}:{sequence}:"):
+                raise ValueError("Runtime observation identity does not match its batch")
+        return identity, sequence, metric_value, runtime_evaluation_digest(evaluation)
+
+    def observe_runtime(self, evaluation: RuntimeEvaluation) -> int:
+        """Accept only new monotonic sequences; gaps are recorded, late events rejected."""
+        self._ensure_open()
+        identity, sequence, metric_value, fingerprint = self._validate_evaluation(evaluation)
+        runtime_id, session_id, _ = identity
         batch_key = (runtime_id, session_id, sequence)
-        fingerprint = runtime_evaluation_digest(evaluation)
         previous = self._runtime_batches.get(batch_key)
         if previous is not None:
             if previous != fingerprint:
                 raise ValueError("conflicting replay for Runtime sequence")
             return 0
-        late_gap_index = None
         if self._last_sequence is not None and sequence <= self._last_sequence:
-            late_gap_index = next((i for i, gap in enumerate(self._sequence_gaps) if gap.status == "open" and gap.start_sequence <= sequence <= gap.end_sequence), None)
-            if late_gap_index is None:
-                raise ValueError("out-of-order Runtime sequence")
-        for item in evaluation.observations:
-            if not item.observation_id.startswith(f"{session_id}:{sequence}:"):
-                raise ValueError("Runtime observation identity does not match its batch")
-        # Validate and stage every state change before the in-memory commit point.
-        staged_gaps = list(self._sequence_gaps)
+            raise ValueError("out-of-order or late Runtime sequence; use an explicit recovery API")
         now = datetime.now(timezone.utc)
-        if late_gap_index is not None:
-            gap = staged_gaps[late_gap_index]
-            if gap.start_sequence == gap.end_sequence:
-                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "compensated", now)
-            elif sequence == gap.start_sequence:
-                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence + 1, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "open", None)
-            elif sequence == gap.end_sequence:
-                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence, gap.end_sequence - 1, gap.previous_sequence, gap.next_sequence, gap.detected_at, "open", None)
-            else:
-                staged_gaps[late_gap_index:late_gap_index + 1] = [
-                    SequenceGap(gap.start_sequence, sequence - 1, gap.previous_sequence, gap.next_sequence, gap.detected_at),
-                    SequenceGap(sequence + 1, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at),
-                ]
-        elif self._last_sequence is not None and sequence > self._last_sequence + 1:
-            staged_gaps.append(SequenceGap(self._last_sequence + 1, sequence - 1, self._last_sequence, sequence, now))
-        # record_many validates the complete batch before mutating its log.
+        staged_gaps = list(self._sequence_gaps)
+        if self._last_sequence is not None and sequence > self._last_sequence + 1:
+            start, end = self._last_sequence + 1, sequence - 1
+            states = {number: "OPEN" for number in range(start, end + 1)}
+            staged_gaps.append(SequenceGap(
+                start, end, self._last_sequence, sequence, now, str(uuid4()), states,
+            ))
+        # All validation and derived objects are prepared before the log mutation.
         added = self._observation_log.record_many(evaluation.observations)
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
+        self._accepted_sequences[sequence] = (fingerprint, evaluation.field_state.timestamp)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
             self.current_value = metric_value
         return added
 
-    @property
-    def sequence_gaps(self) -> tuple[SequenceGap, ...]:
-        return tuple(self._sequence_gaps)
-
-    def close(self) -> None:
-        """Close this in-memory observer; durable recovery is not provided."""
-        self._closed = True
-
-    def mark_gap_unrecoverable(self, start_sequence: int, end_sequence: int) -> None:
-        """Explicitly close an open gap as unrecoverable without rewriting history."""
-        if self._closed:
-            raise RuntimeError("Session C session is closed")
-        if start_sequence < 0 or end_sequence < start_sequence:
-            raise ValueError("invalid gap sequence range")
-        matches = [i for i, gap in enumerate(self._sequence_gaps) if gap.status == "open" and gap.start_sequence == start_sequence and gap.end_sequence == end_sequence]
+    def _find_gap(self, sequence: int) -> SequenceGap:
+        matches = [
+            gap for gap in self._sequence_gaps
+            if gap.start_sequence <= sequence <= gap.end_sequence
+        ]
         if len(matches) != 1:
-            raise ValueError("an exact open gap range is required")
-        index = matches[0]
-        gap = self._sequence_gaps[index]
-        self._sequence_gaps[index] = SequenceGap(gap.start_sequence, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "unrecoverable", datetime.now(timezone.utc))
+            raise ValueError("sequence does not belong to exactly one recorded gap")
+        return matches[0]
 
-    def analyze(self) -> SessionCAnalysis:
-        if self._closed:
-            raise RuntimeError("Session C session is closed")
+    def _replace_gap_member_state(self, gap: SequenceGap, sequence: int, state: str) -> SequenceGap:
+        states = dict(gap.sequence_states)
+        states[sequence] = state
+        return SequenceGap(
+            gap.start_sequence, gap.end_sequence, gap.previous_sequence,
+            gap.next_sequence, gap.detected_at, gap.gap_id, states,
+        )
+
+    def compensate_gap(self, evaluation: RuntimeEvaluation, *, source: str) -> bool:
+        """Explicitly compensate one OPEN member without rewriting event chronology."""
+        self._ensure_open()
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("source must be non-empty")
+        identity, sequence, _, fingerprint = self._validate_evaluation(evaluation)
+        gap = self._find_gap(sequence)
+        if gap.sequence_states[sequence] != "OPEN":
+            existing = self._compensation_records.get((gap.gap_id, sequence))
+            if existing and existing[0] == fingerprint:
+                return False
+            raise ValueError("sequence is not OPEN for compensation or conflicts with prior recovery")
+        key = (gap.gap_id, sequence)
+        existing = self._compensation_records.get(key)
+        if existing:
+            if existing[0] == fingerprint:
+                return False
+            raise ValueError("conflicting compensation replay")
+        now = datetime.now(timezone.utc)
+        updated = self._replace_gap_member_state(gap, sequence, "COMPENSATED")
+        audit = GapAuditEvent(
+            str(uuid4()), gap.gap_id, sequence, "COMPENSATED", "OPEN",
+            "COMPENSATED", now, source=source,
+        )
+        # One logical in-process commit: all allocations/validation precede assignments.
+        staged_gaps = list(self._sequence_gaps)
+        staged_gaps[self._sequence_gaps.index(gap)] = updated
+        staged_audit = [*self._gap_audit_events, audit]
+        staged_records = dict(self._compensation_records)
+        staged_records[key] = (fingerprint, now, source)
+        self._sequence_gaps, self._gap_audit_events, self._compensation_records = (
+            staged_gaps, staged_audit, staged_records,
+        )
+        return True
+
+    def mark_gap_unrecoverable(
+        self, start_sequence: int, end_sequence: int, *,
+        reason: str, source: str, decision_id: str,
+    ) -> None:
+        """Record an explicit decision for every still-OPEN member in an exact gap."""
+        self._ensure_open()
+        if not all(isinstance(value, str) and value.strip() for value in (reason, source, decision_id)):
+            raise ValueError("reason, source, and decision_id are required")
+        matches = [
+            gap for gap in self._sequence_gaps
+            if gap.start_sequence == start_sequence and gap.end_sequence == end_sequence
+        ]
+        if len(matches) != 1:
+            raise ValueError("an exact recorded gap range is required")
+        gap = matches[0]
+        if any(event.decision_id == decision_id for event in self._gap_audit_events):
+            raise ValueError("decision_id has already been used")
+        open_sequences = [n for n, state in gap.sequence_states.items() if state == "OPEN"]
+        if not open_sequences:
+            raise ValueError("gap has no OPEN members to decide")
+        now = datetime.now(timezone.utc)
+        updated = gap
+        staged_events = list(self._gap_audit_events)
+        for sequence in open_sequences:
+            updated = self._replace_gap_member_state(updated, sequence, "UNRECOVERABLE")
+            staged_events.append(GapAuditEvent(
+                str(uuid4()), gap.gap_id, sequence, "UNRECOVERABLE", "OPEN",
+                "UNRECOVERABLE", now, reason, source, decision_id,
+            ))
+        staged_gaps = list(self._sequence_gaps)
+        staged_gaps[self._sequence_gaps.index(gap)] = updated
+        self._sequence_gaps, self._gap_audit_events = staged_gaps, staged_events
+
+    def record_late_recovery(self, evaluation: RuntimeEvaluation, *, source: str) -> LateRecoveryRecord:
+        """Record post-UNRECOVERABLE evidence without changing historical status."""
+        self._ensure_open()
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("source must be non-empty")
+        identity, sequence, _, fingerprint = self._validate_evaluation(evaluation)
+        gap = self._find_gap(sequence)
+        if gap.sequence_states[sequence] != "UNRECOVERABLE":
+            raise ValueError("late recovery is only valid for UNRECOVERABLE members")
+        key = (gap.gap_id, sequence)
+        existing = self._late_recovery_records.get(key)
+        if existing:
+            if existing.event_hash == fingerprint:
+                return existing
+            raise ValueError("conflicting late recovery replay")
+        now = datetime.now(timezone.utc)
+        record = LateRecoveryRecord(
+            str(uuid4()), gap.gap_id, identity[0], identity[1], sequence,
+            fingerprint, evaluation.field_state.timestamp, now, source, now,
+        )
+        staged = dict(self._late_recovery_records)
+        staged[key] = record
+        self._late_recovery_records = staged
+        return record
+
+    def analyze(self, *, as_of: datetime | None = None) -> SessionCAnalysis:
+        self._ensure_open()
         if self.current_value is None:
             raise ValueError("current_value is required before Session C analysis")
+        evaluated_at = as_of or datetime.now(timezone.utc)
+        if evaluated_at.tzinfo is None or evaluated_at.utcoffset() is None:
+            raise ValueError("analysis as_of must be timezone-aware")
+        evaluated_at = evaluated_at.astimezone(timezone.utc)
         items = self.observations
         envelope = FieldEnvelopeEstimator().estimate(
             items, metric_name=self.metric_name,
@@ -231,7 +403,45 @@ class SessionCEngine:
         )
         topic = FieldDrivenTopicEngine().infer(items)
         gaps = tuple(self._sequence_gaps)
-        return SessionCAnalysis(readiness, topic, envelope, gaps, not any(gap.status in {"open", "unrecoverable"} for gap in gaps))
+        sequences = sorted(self._accepted_sequences)
+        scope_start = sequences[0] if sequences else None
+        scope_end = sequences[-1] if sequences else None
+        expected = (scope_end - scope_start + 1) if scope_start is not None else 0
+        available = {
+            number for number, (_, event_time) in self._accepted_sequences.items()
+            if event_time <= evaluated_at
+        }
+        available.update(
+            sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
+            if recorded_at <= evaluated_at
+        )
+        available.update(
+            record.sequence for record in self._late_recovery_records.values()
+            if record.recorded_at <= evaluated_at
+        )
+        scoped_available = tuple(sorted(n for n in available if scope_start is not None and scope_start <= n <= scope_end))
+        count = len(scoped_available)
+        ratio = (count / expected) if expected else 1.0
+        historical = HistoricalCompleteness(
+            evaluated_at, scope_start, scope_end, expected, count,
+            count == expected, ratio,
+        )
+        current_missing_evidence = tuple(sorted({
+            sequence for (gap_id, sequence), _ in self._compensation_records.items()
+        } | {
+            record.sequence for record in self._late_recovery_records.values()
+        }))
+        current_evidence = CurrentlyAvailableEvidence(
+            len(current_missing_evidence), current_missing_evidence,
+        )
+        return SessionCAnalysis(
+            readiness, topic, envelope, gaps, historical.complete,
+            historical, current_evidence,
+        )
+
+    def close(self) -> None:
+        """Close this in-memory observer; durable recovery is not provided."""
+        self._closed = True
 
     def evolve(self) -> EvolutionDecision:
         analysis = self.analyze()
