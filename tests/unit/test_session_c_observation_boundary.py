@@ -29,11 +29,19 @@ def test_observation_is_normalized_to_utc():
     assert item.observed_at_utc == item.observed_at
 
 
-def test_duplicate_observation_ids_are_rejected():
+def test_exact_duplicate_observation_ids_are_idempotent():
+    log = ObservationLog()
+    item = make_observation(1)
+    assert log.record(item) is True
+    assert log.record(make_observation(1)) is False
+    assert log.snapshot() == (item,)
+
+
+def test_conflicting_duplicate_observation_ids_are_rejected():
     log = ObservationLog()
     log.record(make_observation(1))
-    with pytest.raises(ValueError, match="duplicate observation_id"):
-        log.record(make_observation(1))
+    with pytest.raises(ValueError, match="conflicting observation_id"):
+        log.record(make_observation(1, context={"signal": "changed"}))
 
 
 def test_observation_has_no_judgment_fields():

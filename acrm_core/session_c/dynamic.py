@@ -194,6 +194,19 @@ class FieldEnvelopeEstimator:
 class DynamicReadinessEvaluator:
     """Evaluate readiness relative to the envelope's signal direction."""
 
+    @staticmethod
+    def _directional_persistence(values: list[float], direction: SignalDirection) -> float:
+        """Fraction of adjacent transitions that do not reverse risk direction."""
+        if len(values) <= 1:
+            return 0.0
+        pairs = tuple(zip(values, values[1:]))
+        if direction == "high":
+            persistent = sum(current >= previous for previous, current in pairs)
+        else:
+            persistent = sum(current <= previous for previous, current in pairs)
+        return persistent / len(pairs)
+
+
     def evaluate(
         self,
         observations: Iterable[EvolutionObservation],
