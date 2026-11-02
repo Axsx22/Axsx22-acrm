@@ -341,8 +341,9 @@ class SessionCEngine:
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
-        for gap in staged_gaps[len(self._sequence_gaps):]:
-            self._gap_ingest_sequence[gap.gap_id] = next_ingest_sequence
+        for gap in staged_gaps:
+            if gap.gap_id not in self._gap_ingest_sequence:
+                self._gap_ingest_sequence[gap.gap_id] = next_ingest_sequence
         self._accepted_sequences[sequence] = (fingerprint, now, next_ingest_sequence)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
@@ -398,9 +399,13 @@ class SessionCEngine:
         staged_audit = (*self._gap_audit_events, audit)
         staged_records = dict(self._compensation_records)
         staged_records[key] = (fingerprint, now, source)
+        next_ingest_sequence = self._ingest_sequence + 1
         self._sequence_gaps, self._gap_audit_events, self._compensation_records = (
             staged_gaps, staged_audit, staged_records,
         )
+        self._audit_ingest_sequence[audit.event_id] = next_ingest_sequence
+        self._compensation_ingest_sequence[key] = next_ingest_sequence
+        self._ingest_sequence = next_ingest_sequence
         return True
 
     @_synchronized
@@ -427,15 +432,19 @@ class SessionCEngine:
         now = datetime.now(timezone.utc)
         updated = gap
         staged_events = list(self._gap_audit_events)
+        next_ingest_sequence = self._ingest_sequence + 1
         for sequence in open_sequences:
             updated = self._replace_gap_member_state(updated, sequence, "UNRECOVERABLE")
-            staged_events.append(GapAuditEvent(
+            audit_event = GapAuditEvent(
                 str(uuid4()), gap.gap_id, sequence, "UNRECOVERABLE", "OPEN",
                 "UNRECOVERABLE", now, reason, source, decision_id,
-            ))
+            )
+            staged_events.append(audit_event)
+            self._audit_ingest_sequence[audit_event.event_id] = next_ingest_sequence
         staged_gaps = list(self._sequence_gaps)
         staged_gaps[self._sequence_gaps.index(gap)] = updated
         self._sequence_gaps, self._gap_audit_events = staged_gaps, tuple(staged_events)
+        self._ingest_sequence = next_ingest_sequence
 
     @_synchronized
     def record_late_recovery(self, evaluation: RuntimeEvaluation, *, source: str) -> LateRecoveryRecord:
@@ -462,6 +471,9 @@ class SessionCEngine:
         staged_index = dict(self._late_recovery_index)
         staged_index[key] = record
         self._late_recovery_records, self._late_recovery_index = staged_records, staged_index
+        next_ingest_sequence = self._ingest_sequence + 1
+        self._late_recovery_ingest_sequence[record.recovery_id] = next_ingest_sequence
+        self._ingest_sequence = next_ingest_sequence
         return record
 
     @_synchronized
@@ -525,11 +537,11 @@ class SessionCEngine:
         # audit transitions that had occurred by the requested analysis time.
         historical_gaps = []
         for gap in self._sequence_gaps:
-            if gap.detected_at > evaluated_at:
+            if gap.detected_at > evaluated_at or self._gap_ingest_sequence.get(gap.gap_id, snapshot_sequence + 1) > snapshot_sequence:
                 continue
             states = {number: "OPEN" for number in range(gap.start_sequence, gap.end_sequence + 1)}
             for event in self._gap_audit_events:
-                if event.gap_id == gap.gap_id and event.occurred_at <= evaluated_at:
+                if event.gap_id == gap.gap_id and event.occurred_at <= evaluated_at and self._audit_ingest_sequence.get(event.event_id, snapshot_sequence + 1) <= snapshot_sequence:
                     states[event.sequence] = event.new_status
             historical_gaps.append(SequenceGap(
                 gap.start_sequence, gap.end_sequence, gap.previous_sequence,
@@ -543,11 +555,11 @@ class SessionCEngine:
         }
         available.update(
             sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
-            if recorded_at <= evaluated_at
+            if recorded_at <= evaluated_at and self._compensation_ingest_sequence.get((gap_id, sequence), snapshot_sequence + 1) <= snapshot_sequence
         )
         available.update(
             record.sequence for record in self._late_recovery_records
-            if record.recorded_at <= evaluated_at
+            if record.recorded_at <= evaluated_at and self._late_recovery_ingest_sequence.get(record.recovery_id, snapshot_sequence + 1) <= snapshot_sequence
         )
         scoped_available = tuple(sorted(n for n in available if scope_start is not None and scope_start <= n <= scope_end))
         count = len(scoped_available)
