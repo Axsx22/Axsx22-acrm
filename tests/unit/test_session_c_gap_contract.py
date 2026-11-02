@@ -479,6 +479,7 @@ def test_GAP_033_ingest_sequence_is_independent_of_wall_clock_order(monkeypatch)
         real_datetime(2030, 1, 1, 0, 0, 2, tzinfo=timezone.utc),
         real_datetime(2030, 1, 1, 0, 0, 1, tzinfo=timezone.utc),
         real_datetime(2030, 1, 1, 0, 0, 0, 500000, tzinfo=timezone.utc),
+        real_datetime(2030, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
     ))
 
     class BackwardsClock(real_datetime):
@@ -518,13 +519,14 @@ def test_GAP_033_snapshot_cut_excludes_later_commits():
         "snapshot-first", ObservationKind.AMBIGUITY, "first",
         first_time, {"S": 1.0},
     ))
-    first = engine.analyze()
+    snapshot_time = datetime.now(timezone.utc)
+    first = engine.analyze(as_of=snapshot_time)
     engine.record(EvolutionObservation(
         "snapshot-second", ObservationKind.MISSING_CAPABILITY, "second",
         first_time, {"S": 2.0},
     ))
 
-    frozen = engine.analyze(as_of_ingest_sequence=first.snapshot_ingest_sequence)
+    frozen = engine.analyze(as_of=snapshot_time, as_of_ingest_sequence=first.snapshot_ingest_sequence)
     current = engine.analyze()
     assert frozen == first
     assert frozen.snapshot_ingest_sequence == 2
