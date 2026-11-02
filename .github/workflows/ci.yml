@@ -31,5 +31,19 @@ jobs:
       - name: Install package and test dependencies
         run: python -m pip install -e ".[test]"
 
-      - name: Run tests
-        run: python -m pytest -q
+      - name: Compile source and tests
+        run: python -m compileall -q acrm_core tests
+
+      - name: Static lint (changed Runtime surface)
+        run: >-
+          python -m ruff check
+          acrm_core/runtime/failure_taxonomy.py
+          acrm_core/runtime/field_runtime.py
+          acrm_core/runtime/specialist_governance.py
+          tests/unit/test_runtime_v7_v83.py
+
+      - name: Run tests with coverage
+        run: python -m pytest --cov=acrm_core --cov-report=term-missing --cov-report=xml -ra
+
+      - name: Audit installed dependencies
+        run: python -m pip_audit --strict
