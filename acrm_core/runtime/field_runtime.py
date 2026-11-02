@@ -17,6 +17,7 @@ from uuid import uuid4
 
 from acrm_core.field.state import FieldState
 from acrm_core.session_c.observation import EvolutionObservation, ObservationKind
+
 from .failure_taxonomy import FAILURE_MODES, Calibration
 from .specialist_governance import GovernanceResult, SpecialistGovernance
 
