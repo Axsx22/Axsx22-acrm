@@ -191,9 +191,10 @@ class SessionCEngine:
         self._accepted_sequences: dict[int, tuple[str, datetime]] = {}
         self._last_sequence = None
         self._sequence_gaps: list[SequenceGap] = []
-        self._gap_audit_events: list[GapAuditEvent] = []
+        self._gap_audit_events: tuple[GapAuditEvent, ...] = ()
         self._compensation_records: dict[tuple[str, int], tuple[str, datetime, str]] = {}
-        self._late_recovery_records: dict[tuple[str, int], LateRecoveryRecord] = {}
+        self._late_recovery_records: tuple[LateRecoveryRecord, ...] = ()
+        self._late_recovery_index: dict[tuple[str, int], LateRecoveryRecord] = {}
         self._closed = False
 
     @property
@@ -206,11 +207,11 @@ class SessionCEngine:
 
     @property
     def gap_audit_events(self) -> tuple[GapAuditEvent, ...]:
-        return tuple(self._gap_audit_events)
+        return self._gap_audit_events
 
     @property
     def late_recovery_records(self) -> tuple[LateRecoveryRecord, ...]:
-        return tuple(self._late_recovery_records.values())
+        return self._late_recovery_records
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -325,7 +326,7 @@ class SessionCEngine:
         # One logical in-process commit: all allocations/validation precede assignments.
         staged_gaps = list(self._sequence_gaps)
         staged_gaps[self._sequence_gaps.index(gap)] = updated
-        staged_audit = [*self._gap_audit_events, audit]
+        staged_audit = (*self._gap_audit_events, audit)
         staged_records = dict(self._compensation_records)
         staged_records[key] = (fingerprint, now, source)
         self._sequence_gaps, self._gap_audit_events, self._compensation_records = (
@@ -364,7 +365,7 @@ class SessionCEngine:
             ))
         staged_gaps = list(self._sequence_gaps)
         staged_gaps[self._sequence_gaps.index(gap)] = updated
-        self._sequence_gaps, self._gap_audit_events = staged_gaps, staged_events
+        self._sequence_gaps, self._gap_audit_events = staged_gaps, tuple(staged_events)
 
     def record_late_recovery(self, evaluation: RuntimeEvaluation, *, source: str) -> LateRecoveryRecord:
         """Record post-UNRECOVERABLE evidence without changing historical status."""
@@ -376,7 +377,7 @@ class SessionCEngine:
         if gap.sequence_states[sequence] != "UNRECOVERABLE":
             raise ValueError("late recovery is only valid for UNRECOVERABLE members")
         key = (gap.gap_id, sequence)
-        existing = self._late_recovery_records.get(key)
+        existing = self._late_recovery_index.get(key)
         if existing:
             if existing.event_hash == fingerprint:
                 return existing
@@ -386,9 +387,10 @@ class SessionCEngine:
             str(uuid4()), gap.gap_id, identity[0], identity[1], sequence,
             fingerprint, evaluation.field_state.timestamp, now, source, now,
         )
-        staged = dict(self._late_recovery_records)
-        staged[key] = record
-        self._late_recovery_records = staged
+        staged_records = (*self._late_recovery_records, record)
+        staged_index = dict(self._late_recovery_index)
+        staged_index[key] = record
+        self._late_recovery_records, self._late_recovery_index = staged_records, staged_index
         return record
 
     def analyze(self, *, as_of: datetime | None = None) -> SessionCAnalysis:
@@ -425,7 +427,7 @@ class SessionCEngine:
             if recorded_at <= evaluated_at
         )
         available.update(
-            record.sequence for record in self._late_recovery_records.values()
+            record.sequence for record in self._late_recovery_records
             if record.recorded_at <= evaluated_at
         )
         scoped_available = tuple(sorted(n for n in available if scope_start is not None and scope_start <= n <= scope_end))
