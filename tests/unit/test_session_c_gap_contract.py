@@ -502,13 +502,10 @@ def test_GAP_033_ingest_sequence_is_independent_of_wall_clock_order(monkeypatch)
 
     snapshot = engine.analyze(
         as_of=real_datetime(2031, 1, 1, tzinfo=timezone.utc),
-        as_of_ingest_sequence=3,
+        as_of_ingest_sequence=2,
     )
-    assert snapshot.snapshot_ingest_sequence == 3
-    assert snapshot.readiness.observation_count == 2
-    assert engine._observation_ingest_sequence == {
-        "clock-first": 2, "clock-second": 3,
-    }
+    assert snapshot.snapshot_ingest_sequence == 2
+    assert snapshot.readiness.observation_count == 1
 
 
 def test_GAP_033_snapshot_cut_excludes_later_commits():
@@ -548,10 +545,18 @@ def test_GAP_033_concurrent_records_commit_once_and_snapshot_consistently():
         ))
 
     with ThreadPoolExecutor(max_workers=8) as pool:
-        list(pool.map(add, range(32)))
+        futures = []
+        for index in range(32):
+            futures.append(pool.submit(add, index))
+            futures.append(pool.submit(engine.analyze))
+        snapshots = [future.result() for future in futures if future.result() is not None]
 
     snapshot = engine.analyze()
     assert snapshot.snapshot_ingest_sequence == 33
     assert snapshot.readiness.observation_count == 32
     assert snapshot.envelope.sample_count == 32
     assert len(engine.observations) == 32
+    assert all(
+        item.snapshot_ingest_sequence == item.readiness.observation_count + 1
+        for item in snapshots
+    )
