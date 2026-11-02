@@ -46,4 +46,4 @@ jobs:
         run: python -m pytest --cov=acrm_core --cov-report=term-missing --cov-report=xml -ra
 
       - name: Audit installed dependencies
-        run: python -m pip_audit --strict
+        run: python -m pip_audit --strict --skip-editable
