@@ -7,6 +7,7 @@ without carrying over browser/UI state or simulated presentation values.
 
 from __future__ import annotations
 
+import itertools
 import math
 from dataclasses import dataclass
 from enum import Enum
@@ -108,7 +109,7 @@ def run_calibration_checks() -> dict[str, bool]:
     """Run the six computational checks represented by the v7 runtime UI."""
     raw = (0.1, 0.3, 0.5, 0.7, 0.9)
     platt = tuple(Calibration.platt(x) for x in raw)
-    monotonic = all(a < b for a, b in zip(platt, platt[1:]))
+    monotonic = all(a < b for a, b in itertools.pairwise(platt))
 
     s1, s2 = 0.64, 0.66
     slope = abs(Calibration.sigmoid_risk(s2) - Calibration.sigmoid_risk(s1)) / (s2 - s1)
