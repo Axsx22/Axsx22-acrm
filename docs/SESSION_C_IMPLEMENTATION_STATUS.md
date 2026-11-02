@@ -19,7 +19,7 @@ Session C is an independent, continuously operating Runtime observer and control
 | Dynamic envelope | Derives quantile limits from numeric values in observation context. | No online windowing/decay or empirical calibration contract is established. |
 | Readiness evaluator | Combines observation count, threshold state, and the current persistence descriptor. | Current gate is not yet the complete evidence-sufficiency decision described by the target architecture. |
 | Topic engine | Maps constrained observation kinds to a small topic taxonomy. | Not a general semantic topic model. |
-| Session C orchestrator | Analyzes a supplied observation collection and coordinates evolution callbacks. | Current engine is initialized from a snapshot; it has no continuous Runtime subscription or live ingestion API. |
+| Session C orchestrator | Analyzes its independent in-memory observation log and accepts later records through `record()` / `observe_runtime()`. | Caller-pushed ingestion only; no autonomous background subscription, event bus, or durable storage. |
 | Evolution candidate | Represents generated source and evidence IDs. | No immutable artifact store or content-hash/provenance ledger. |
 | Candidate tester | Calls an injected tester and gates review on successful results. | The core does not provide sandboxing, process isolation, resource limits, or test artifact retention. |
 | Weighted review | Aggregates reliability/relevance-weighted specialist votes. | Vote weights require validation; this is not execution authorization. |
@@ -101,7 +101,7 @@ User authorization and automatic policy authorization are separate target paths.
 
 ## 5. Immediate engineering priorities
 
-1. Add a live Runtime event adapter and Session C ingestion lifecycle.
+1. Connect the explicit Runtime event adapter to a continuous background delivery mechanism with backpressure, retry, ordering, and durable acknowledgement.
 2. Keep Session C history independent and durable; define recovery and idempotency.
 3. Isolate Runtime governance state by session.
 4. Replace kind-recurrence-as-signal-persistence with a separately named and tested signal-level persistence contract.

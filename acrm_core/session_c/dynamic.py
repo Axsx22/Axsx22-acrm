@@ -251,7 +251,7 @@ class DynamicReadinessEvaluator:
             and not isinstance(item.context.get(envelope.metric_name), bool)
             and isfinite(float(item.context[envelope.metric_name]))
         ]
-        signal_persistence = self._directional_persistence(numeric_history, effective_direction)
+        signal_persistence = FieldEnvelopeEstimator._directional_persistence(numeric_history, effective_direction)
         ready = (
             profile.observation_count >= min_observations
             and state in {"WARNING", "CRITICAL"}
