@@ -151,3 +151,68 @@ def test_engine_rejects_out_of_order_delivery_atomically():
     with pytest.raises(ValueError, match="out-of-order"):
         engine.observe_runtime(earlier)
     assert engine.observations == before
+
+
+
+def test_runtime_instances_have_distinct_stable_ids():
+    first = FieldRuntime()
+    second = FieldRuntime()
+    assert first.runtime_id
+    assert first.runtime_id == first.evaluate(
+        (Turn("user", "Explain a system."), Turn("model", "A system has parts.")),
+        sequence=1,
+    ).runtime_id
+    assert first.runtime_id != second.runtime_id
+
+
+def test_sequence_gap_is_recorded_and_late_event_compensates_it():
+    runtime = FieldRuntime(runtime_id="runtime-gap")
+    engine = SessionCEngine(
+        metric_name="S", generator=generator, tester=candidate_tester,
+        vote_provider=votes,
+    )
+    turns = (
+        Turn("user", "Explain a software system."),
+        Turn("model", "A software system has components."),
+    )
+    seq12 = runtime.evaluate(turns, session_id="gap-session", sequence=12)
+    seq14 = runtime.evaluate(turns, session_id="gap-session", sequence=14)
+    seq13 = runtime.evaluate(turns, session_id="gap-session", sequence=13)
+
+    engine.observe_runtime(seq12)
+    engine.observe_runtime(seq14)
+    assert len(engine.sequence_gaps) == 1
+    gap = engine.sequence_gaps[0]
+    assert (gap.start_sequence, gap.end_sequence) == (13, 13)
+    assert gap.previous_sequence == 12
+    assert gap.next_sequence == 14
+    assert gap.status == "open"
+
+    engine.observe_runtime(seq13)
+    gap = engine.sequence_gaps[0]
+    assert gap.status == "compensated"
+    assert gap.resolved_at is not None
+    assert engine.observations[-1].observation_id.startswith("gap-session:13:")
+
+
+def test_same_sequence_with_changed_full_payload_is_a_conflict():
+    from dataclasses import replace
+    from datetime import timedelta
+
+    runtime = FieldRuntime(runtime_id="runtime-hash")
+    engine = SessionCEngine(
+        metric_name="S", generator=generator, tester=candidate_tester,
+        vote_provider=votes,
+    )
+    evaluation = runtime.evaluate(
+        (Turn("user", "Explain a system."), Turn("model", "A system has parts.")),
+        session_id="hash-session", sequence=1,
+    )
+    engine.observe_runtime(evaluation)
+    changed_observation = replace(
+        evaluation.observations[0],
+        observed_at=evaluation.observations[0].observed_at + timedelta(seconds=1),
+    )
+    changed = replace(evaluation, observations=(changed_observation,) + evaluation.observations[1:])
+    with pytest.raises(ValueError, match="conflicting replay"):
+        engine.observe_runtime(changed)

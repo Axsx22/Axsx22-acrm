@@ -135,12 +135,11 @@ class SessionCEngine:
         sequence = evaluation.field_state.sequence
         if not runtime_id or not session_id or sequence < 0:
             raise ValueError("Runtime identity and non-negative sequence are required")
-        field_id = evaluation.field_state.field_id
-        if not isinstance(field_id, str) or not field_id.strip():
-            raise ValueError("RuntimeEvaluation must carry an explicit field_id")
-        identity = (runtime_id, session_id, field_id)
-        if self._runtime_identity is not None and self._runtime_identity != identity:
-            raise ValueError("RuntimeEvaluation belongs to a different Runtime/Session/Field; use a separate SessionCEngine")
+        identity = (runtime_id, session_id)
+        if self._runtime_identity is None:
+            self._runtime_identity = identity
+        elif self._runtime_identity != identity:
+            raise ValueError("RuntimeEvaluation belongs to a different Runtime/Session; use a separate SessionCEngine")
         if self.metric_name not in evaluation.field_state.metrics:
             raise ValueError(f"Runtime FieldState does not contain metric {self.metric_name!r}")
         metric_value = float(evaluation.field_state.metrics[self.metric_name])
@@ -182,7 +181,6 @@ class SessionCEngine:
             staged_gaps.append(SequenceGap(self._last_sequence + 1, sequence - 1, self._last_sequence, sequence, now))
         # record_many validates the complete batch before mutating its log.
         added = self._observation_log.record_many(evaluation.observations)
-        self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
         if self._last_sequence is None or sequence > self._last_sequence:
