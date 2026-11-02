@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import Any, Sequence
+from typing import Sequence
 
 
 class FailureSeverity(str, Enum):
@@ -73,8 +73,20 @@ class Calibration:
 
     @staticmethod
     def laplace(errors: int, total: int) -> float:
+        """Return the Laplace-smoothed error rate for valid integer counts.
+
+        The zero-sample convention is retained for compatibility: (0, 0)
+        returns 1.0. This is a numerical smoothing rule, not empirical
+        calibration of a model's confidence.
+        """
+        if isinstance(errors, bool) or not isinstance(errors, int):
+            raise TypeError("errors must be an integer")
+        if isinstance(total, bool) or not isinstance(total, int):
+            raise TypeError("total must be an integer")
         if total < 0 or errors < 0:
             raise ValueError("errors and total must be non-negative")
+        if errors > total:
+            raise ValueError("errors cannot exceed total")
         if total == 0:
             return 1.0
         return (errors + 1) / (total + 2)
