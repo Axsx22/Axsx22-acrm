@@ -39,6 +39,32 @@
 | Multi-model generalization | Empirical | No completed repository result currently establishes it | Compare across model families, prompts/conditions, and repeated runs. |
 | Independent reproduction | Independent | Not yet established | Provide reproducible experiment package and obtain external replication/review. |
 
+## Runtime measurement limitations
+
+The current Runtime produces useful executable baseline signals, but their interpretation must remain narrow:
+
+| Signal | Current operational meaning | Must not be claimed as |
+|---|---|---|
+| Sequential similarity | Cosine similarity between adjacent token-frequency vectors | Semantic consistency or intent preservation |
+| Centroid coherence | Cosine similarity against an exponentially updated lexical centroid | General semantic coherence |
+| Alignment gap | One minus lexical cosine similarity for adjacent user/model turns | Misalignment of goals or meaning |
+| Entropy | Normalized lexical token-frequency entropy within a turn | Model uncertainty or cognitive uncertainty |
+| Anomaly index | Deviation from an EMA of sequential lexical similarity | Confirmed behavioral drift or failure |
+| Governance confidence | Current implementation derives this as 1 minus latest lexical entropy | Calibrated probability or validated confidence |
+
+These are operational definitions of the current implementation, not validated interpretations of LLM behavior. Any broader interpretation requires a separate operational definition and empirical evaluation.
+
+## Known engineering hardening items
+
+| Item | Main baseline status | Required action |
+|---|---|---|
+| Laplace error-count validation | Hardened on audit branch | Reject non-integer, Boolean, negative, and errors-greater-than-total inputs |
+| Anomaly threshold finiteness | Hardened on audit branch | Reject NaN and positive/negative infinity |
+| Deep immutability of observation context | Main remains shallow | Integrate and test supported recursive freezing before claiming deep immutability |
+| Historical evidence provenance for Dynamic Envelope | GAP-034 contract only on Session C development branch | Implement separately with component-level evidence and snapshot provenance |
+| Runtime/provider event transport | Not established | Define transport, retry, acknowledgement, ordering, and failure semantics |
+| Durable sequence and restart recovery | Not implemented | Define persistence and recovery contract before implementation |
+
 ## Required discipline for the next phase
 
 1. Do not convert a unit-test result into a scientific claim.
