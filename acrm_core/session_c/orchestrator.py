@@ -436,9 +436,11 @@ class SessionCEngine:
             count == expected, ratio,
         )
         current_missing_evidence = tuple(sorted({
-            sequence for (gap_id, sequence), _ in self._compensation_records.items()
+            sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
+            if recorded_at <= evaluated_at
         } | {
             record.sequence for record in self._late_recovery_records.values()
+            if record.recorded_at <= evaluated_at
         }))
         current_evidence = CurrentlyAvailableEvidence(
             len(current_missing_evidence), current_missing_evidence,
