@@ -74,3 +74,20 @@ def test_v83_does_not_freeze_when_evidence_is_directional():
 def test_runtime_rejects_short_input():
     with pytest.raises(ValueError):
         FieldRuntime().evaluate(({"role": "user", "text": "only one"},))
+
+
+
+def test_runtime_governance_state_is_isolated_by_session_id():
+    runtime = FieldRuntime()
+    turns = (
+        {"role": "user", "text": "Explain the software system, API, and code."},
+        {"role": "model", "text": "The software system uses an API and code."},
+    )
+    first_a = runtime.evaluate(turns, session_id="session-a", sequence=1)
+    first_b = runtime.evaluate(turns, session_id="session-b", sequence=1)
+    second_a = runtime.evaluate(turns, session_id="session-a", sequence=2)
+    second_b = runtime.evaluate(turns, session_id="session-b", sequence=2)
+
+    assert first_a.governance.accumulator == first_b.governance.accumulator
+    assert second_a.governance.accumulator == second_b.governance.accumulator
+    assert second_a.governance.accumulator != first_a.governance.accumulator

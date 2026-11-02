@@ -94,8 +94,8 @@ def test_envelope_ignores_non_numeric_and_non_finite_values():
 def test_warning_does_not_imply_evolution_without_persistence():
     items = (
         obs(0, ObservationKind.PRESSURE, 1),
-        obs(1, ObservationKind.AMBIGUITY, 2),
-        obs(2, ObservationKind.MISSING_CAPABILITY, 3),
+        obs(1, ObservationKind.AMBIGUITY, 3),
+        obs(2, ObservationKind.MISSING_CAPABILITY, 2),
     )
     envelope = FieldEnvelopeEstimator().estimate(
         items, metric_name="load", warning_quantile=0.5, critical_quantile=1.0
@@ -104,6 +104,7 @@ def test_warning_does_not_imply_evolution_without_persistence():
         items, envelope=envelope, current_value=2.0, persistence_floor=0.8
     )
     assert result.state == "WARNING"
+    assert result.signal_persistence == 0.5
     assert result.ready is False
 
 
@@ -117,6 +118,7 @@ def test_persistent_approach_can_prepare_before_critical():
         persistence_floor=0.5,
     )
     assert result.state == "WARNING"
+    assert result.signal_persistence == 1.0
     assert result.ready is True
 
 

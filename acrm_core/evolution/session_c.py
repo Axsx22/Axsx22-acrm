@@ -1,7 +1,9 @@
 """Session C: controlled self-evolution orchestration.
 
 C-A records neutral evidence; C-B applies governed evolution gates. Session C
-never executes generated source or mutates the active runtime.
+never executes generated source or mutates the active runtime in this core.
+Runtime injection, version switching, and execution authorization are distinct
+downstream decisions and are not implied by SWITCH_RECOMMENDED.
 """
 
 from __future__ import annotations
@@ -55,6 +57,14 @@ class EvolutionCandidate:
             raise ValueError("source must be non-empty")
         if not isinstance(self.based_on, tuple):
             raise TypeError("based_on must be a tuple")
+        if any(not isinstance(item, str) or not item.strip() for item in self.based_on):
+            raise ValueError("based_on entries must be non-empty strings")
+        if len(self.based_on) != len(set(self.based_on)):
+            raise ValueError("based_on entries must be unique")
+        if not isinstance(self.successful_test_runs, int) or isinstance(self.successful_test_runs, bool):
+            raise TypeError("successful_test_runs must be an integer")
+        if not isinstance(self.test_attempts, int) or isinstance(self.test_attempts, bool):
+            raise TypeError("test_attempts must be an integer")
         if self.successful_test_runs < 0 or self.test_attempts < 0:
             raise ValueError("test counters cannot be negative")
         if self.successful_test_runs > self.test_attempts:
@@ -116,7 +126,7 @@ VoteProvider = Callable[[EvolutionCandidate, EvolutionContext], Iterable[Special
 
 
 class EvolutionSessionC:
-    """Two-stage self-evolution supervisor with explicit safety gates."""
+    """Two-stage evolution supervisor with explicit, non-conflated gates."""
 
     def __init__(self, *, tolerance: EvolutionTolerance | None = None, generator: CodeGenerator, tester: CandidateTester, vote_provider: VoteProvider) -> None:
         self.tolerance = tolerance or EvolutionTolerance()
@@ -167,7 +177,10 @@ class EvolutionSessionC:
             return EvolutionDecision("REVIEW_COMPLETE", self._candidate, None, 0, "review has already completed for this Session C cycle")
 
         current = self._candidate
-        passed = bool(self._tester(current))
+        test_result = self._tester(current)
+        if type(test_result) is not bool:
+            raise TypeError("candidate tester must return a literal bool")
+        passed = test_result
         attempts = current.test_attempts + 1
         successful = current.successful_test_runs + int(passed)
         ready = successful >= self.tolerance.successful_tests_before_review
@@ -180,6 +193,11 @@ class EvolutionSessionC:
             return EvolutionDecision("TESTING_PROGRESS", self._candidate, None, 0, f"candidate passed this test; {remaining} successful test run(s) remain before review")
 
         votes = tuple(self._vote_provider(self._candidate, context))
+        specialist_ids = [vote.specialist_id for vote in votes]
+        if len(specialist_ids) != len(set(specialist_ids)):
+            self._review_complete = True
+            return EvolutionDecision("REJECT_VOTE", self._candidate, None, len(votes), "duplicate specialist_id values are not independent votes")
+
         total_weight = sum(v.weight for v in votes)
         if total_weight <= 0.0:
             self._review_complete = True
@@ -188,8 +206,8 @@ class EvolutionSessionC:
         weighted_score = sum(float(v.vote) * v.weight for v in votes) / total_weight
         self._review_complete = True
         if weighted_score >= self.tolerance.switch_score:
-            return EvolutionDecision("SWITCH_RECOMMENDED", self._candidate, weighted_score, len(votes), "candidate passed the test gate and reached the weighted topic-aware vote threshold")
+            return EvolutionDecision("SWITCH_RECOMMENDED", self._candidate, weighted_score, len(votes), "candidate passed the test gate and reached the weighted topic-aware vote threshold; this is not an execution authorization")
         return EvolutionDecision("RETAIN_CURRENT", self._candidate, weighted_score, len(votes), "candidate passed the test gate but did not reach the weighted topic-aware vote threshold")
 
-
-# Deliberately no runtime switch/execution API is exposed here.
+# Deliberately no runtime injection, version switch, or execution authorization
+# API is exposed here. Those are separate decisions and require a later contract.

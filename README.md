@@ -22,7 +22,7 @@ The central research question is:
 
 > **How can an LLM-based cognitive system remain observable, evaluable, and governable as its state, behavior, interactions, and trajectories evolve over time?**
 
-ACRM is intentionally **not** presented as a safety filter, policy engine, autonomous self-modifying system, or scientifically validated theory of cognition.
+The current executable baseline is **not** a safety filter, policy engine, autonomous self-modifying system, or scientifically validated theory of cognition. The target Session C architecture includes a separately governed evolution lifecycle, but Runtime Injection, Version Switch, authorization, and controlled execution are not implemented in the current core.
 
 ### Architectural boundary
 
@@ -193,7 +193,7 @@ The integrated runtime includes:
 - v8.3 specialist applicability/diagnosis/reporting;
 - weighted evidence and balance handling;
 - persistence and reporting state;
-- an explicit boundary for passing observable runtime state/events to Session C;
+- Runtime evaluation outputs and observation records that can be consumed by Session C; automatic continuous event subscription is not yet wired;
 - unit coverage for the promoted execution path.
 
 Historical browser/UI implementations remain preserved as evidence and lineage; the current executable source is represented in the Python core.
@@ -226,107 +226,77 @@ This distinction is fundamental:
 
 ## 5. Session C — independent runtime observer and controlled evolution layer
 
-Session C is a **background observer of the active system during execution**. Its architecture and implementation are deliberately separate from the Runtime that it observes.
+Session C is designed as an **independent, continuously operating observer of the active Runtime**, with its own longitudinal evolution history. It does not duplicate Runtime internals or participate in the Runtime's ordinary turn-by-turn execution path.
 
-Its primary role is to observe execution behavior over time, accumulate an independent trajectory view, characterize dynamic change, identify whether an evolution condition is present, and—when the observation contract permits—prepare a candidate for separate testing and review.
+The target lifecycle includes:
 
-### Session C boundary
+1. Receiving observable Runtime events/state during execution.
+2. Maintaining an independent, append-only evolution history.
+3. Analyzing trajectory and field changes over time.
+4. Determining whether evidence is sufficient to open an evolution cycle.
+5. Coordinating background candidate generation or code modification.
+6. Sending the candidate through independent testing and weighted review.
+7. Separately deciding the change route: **Runtime Injection** or **Version Switch**.
+8. Separately deciding execution authorization: user authorization or a defined automatic policy gate.
+9. Executing only after all required stages, then verifying the result and preserving rollback/audit evidence.
 
-```
-             ACTIVE RUNTIME
-                   │
-                   │ observable outputs / events
-                   ▼
-          ┌──────────────────┐
-          │    Session C     │
-          │ Background       │
-          │ Observation      │
-          │ & Evolution      │
-          │ Governance       │
-          └────────┬─────────┘
-                   │
-          ┌────────┼──────────────┐
-          ▼        ▼              ▼
-     trajectory  dynamic       topic /
-     analysis   tolerance      evolution
-                   │              │
-                   └──────┬───────┘
-                          ▼
-                  candidate generation
-                          │
-                          ▼
-                    independent test
-                          │
-                          ▼
-                  specialist review
-                          │
-                          ▼
-              SWITCH_RECOMMENDED
-                          │
-                          ▼
-             external authorization
-```
+These are three different decisions:
 
-The Runtime and Session C therefore have different responsibilities:
+- **Evidence decision:** Is a change justified?
+- **Route decision:** Should the change be injected into the active Runtime or activated as a separate version?
+- **Authorization decision:** Does the user authorize execution, or does a separately defined automatic policy gate permit it?
 
-| Component | Responsibility | Executes Runtime patch? |
-|---|---|---:|
-| **Runtime** | Execute the active behavioral observation/governance path | Yes, as the active runtime itself |
-| **Session C** | Observe Runtime execution and analyze evolution signals | **No** |
-| **Candidate generator** | Produce a proposed evolution candidate, potentially including source code | **No** |
-| **Candidate tester** | Independently evaluate a candidate against the supplied test contract | **No active Runtime mutation** |
-| **Specialist review** | Evaluate candidate evidence and produce a governance result | **No** |
-| **External authorization** | Decide whether an approved recommendation is actually applied | Outside Session C |
+A weighted review is not execution authorization. `SWITCH_RECOMMENDED` is not a command to mutate or replace the active Runtime.
 
-### What Session C currently does
+### Target architecture
 
-- observes runtime-provided execution state/events without becoming part of the Runtime's internal decision path;
-- records neutral, immutable observations;
-- maintains its own trajectory representation;
-- estimates dynamic envelopes from observed history;
-- evaluates threshold approach and evolution readiness;
-- infers relevant evolution topics from observed context;
-- requests or accepts candidate generation through explicit interfaces;
-- supports **code-bearing evolution candidates** through the candidate-generation interface;
-- sends candidates through an independent test gate;
-- performs weighted specialist review of candidate evidence;
-- returns controlled outcomes such as retain, reject, or `SWITCH_RECOMMENDED`.
-
-### What Session C does not do
-
-- it does not duplicate the Runtime architecture or its internal algorithms;
-- it does not directly execute generated code as part of its core governance path;
-- it does not patch, replace, or mutate the active Runtime automatically;
-- `SWITCH_RECOMMENDED` is a recommendation, **not an execution command**;
-- it does not contain the external authorization boundary for applying a Runtime change;
-- it does not prove autonomous self-evolution;
-- it does not establish scientific validity of the underlying behavioral hypotheses.
-
-This distinction is central to the current design: **Session C can participate in code generation and candidate evaluation without becoming the mechanism that executes or installs that code into the active Runtime.**
-
-### Observer contract
-
-Session C should be evaluated primarily on the correctness of its observation boundary and evolution-governance behavior:
-
-```
-Runtime execution
-      ↓
-observable event/state
-      ↓
-Session C observation
-      ↓
-independent temporal analysis
-      ↓
-evolution readiness
-      ↓
-candidate / test / review
-      ↓
-recommendation only
+```text
+ACTIVE RUNTIME
+      |
+observable events / state
+      v
+SESSION C — independent continuous observer
+      |
+append-only evolution history
+      |
+trajectory / field analysis
+      |
+evidence sufficiency
+      |
+background candidate generation / modification
+      |
+independent testing
+      |
+weighted cross-layer review
+      |
+change-route decision
+      |--------------------------|
+      v                          v
+Runtime Injection           Version Switch
+      |                          |
+      +------------+-------------+
+                   v
+          authorization decision
+             |             |
+             v             v
+            user       automatic policy
+             |             |
+             +------+------+
+                    v
+          controlled execution
+                    |
+          verification / rollback
 ```
 
-Accordingly, Session C tests should not ask whether it reproduces Runtime internals. They should ask whether it correctly observes, analyzes, preserves isolation, and respects the recommendation-versus-execution boundary.
+### Current implementation on `main`
 
----
+The current code contains the observation data type and in-memory log, trajectory and dynamic-envelope primitives, constrained topic inference, candidate representation, callback-based generation/testing, and weighted review. Runtime evaluation also emits observation records.
+
+However, the current `SessionCEngine` is initialized from a supplied observation collection and snapshots it. The full live Runtime → Session C event subscription, durable independent history, complete evidence-sufficiency contract, Runtime Injection/Version Switch route selection, user/automatic authorization, controlled execution, and rollback are **not yet implemented**.
+
+The current candidate tester is an injected callback; the core does not provide a code-execution sandbox. Current trajectory persistence based on repeated observation kinds must not be interpreted as numerical signal persistence or semantic/behavioral persistence.
+
+For the complete target contract and implementation-status matrix, see [docs/SESSION_C_ARCHITECTURE.md](SESSION_C_ARCHITECTURE.md) and [docs/SESSION_C_IMPLEMENTATION_STATUS.md](SESSION_C_IMPLEMENTATION_STATUS.md).
 
 ## 6. Provider integration boundary
 

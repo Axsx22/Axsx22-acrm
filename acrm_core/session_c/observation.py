@@ -1,7 +1,8 @@
 """Canonical neutral observation boundary for ACRM Session C C-A."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from types import MappingProxyType
 from typing import Mapping
@@ -13,6 +14,31 @@ class ObservationKind(str, Enum):
     MISSING_CAPABILITY = "missing_capability"
     EVOLUTION_SIGNAL = "evolution_signal"
     FAILURE = "failure"
+
+
+def _freeze(value: object) -> object:
+    """Recursively freeze supported container values at the observation boundary.
+
+    Context is intentionally restricted to ordinary immutable scalars and
+    built-in containers. Rejecting opaque mutable objects is safer than
+    presenting a shallow read-only wrapper as an immutable evidence record.
+    """
+    if isinstance(value, Mapping):
+        frozen = {}
+        for key, item in value.items():
+            if not isinstance(key, (str, int, float, bool, Enum)):
+                raise TypeError("context mapping keys must be immutable scalar values")
+            frozen[key] = _freeze(item)
+        return MappingProxyType(frozen)
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(_freeze(item) for item in value)
+    if value is None or isinstance(value, (str, int, float, bool, bytes, date, datetime, Decimal, Enum)):
+        return value
+    raise TypeError(
+        f"unsupported mutable or opaque context value: {type(value).__name__}"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +73,7 @@ class EvolutionObservation:
         if not isinstance(self.source, str) or not self.source.strip():
             raise ValueError("source must be non-empty")
         object.__setattr__(self, "observed_at", self.observed_at.astimezone(timezone.utc))
-        object.__setattr__(self, "context", MappingProxyType(dict(self.context)))
+        object.__setattr__(self, "context", _freeze(self.context))
 
     @property
     def observed_at_utc(self) -> datetime:

@@ -92,8 +92,21 @@ class FieldRuntime:
         if anomaly_threshold < 0.0:
             raise ValueError("anomaly_threshold must be non-negative")
         self.governance = governance or SpecialistGovernance()
+        self._governance_by_session: dict[str, SpecialistGovernance] = {}
+        self._governance_template_claimed = False
         self.anomaly_threshold = anomaly_threshold
         self.centroid_alpha = centroid_alpha
+
+    def _governance_for_session(self, session_id: str) -> SpecialistGovernance:
+        """Return governance state isolated to one Runtime session."""
+        if session_id not in self._governance_by_session:
+            if not self._governance_template_claimed:
+                instance = self.governance
+                self._governance_template_claimed = True
+            else:
+                instance = SpecialistGovernance(reasoner=self.governance.reasoner)
+            self._governance_by_session[session_id] = instance
+        return self._governance_by_session[session_id]
 
     def evaluate(self, turns: Iterable[Turn | Mapping[str, str]], *, field_id: str = "runtime", session_id: str = "runtime", sequence: int = 0, timestamp: datetime | None = None) -> RuntimeEvaluation:
         normalized = tuple(t if isinstance(t, Turn) else Turn(str(t.get("role", "user")), str(t.get("text", ""))) for t in turns)
@@ -129,7 +142,7 @@ class FieldRuntime:
         active = list(dict.fromkeys(active))
 
         metrics = {"avgS": avg_s, "avgRho": avg_rho, "lastH": last_h, "RS": resilience, "anomalyIdx": anomaly}
-        governance = self.governance.evaluate(tuple({"role": t.role, "text": t.text} for t in normalized), metrics)
+        governance = self._governance_for_session(session_id).evaluate(tuple({"role": t.role, "text": t.text} for t in normalized), metrics)
         confidence = max(0.0, min(1.0, 1.0 - last_h))
         now = timestamp or datetime.now(timezone.utc)
         field = FieldState(
