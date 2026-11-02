@@ -7,13 +7,13 @@ from acrm_core.session_c.observation import EvolutionObservation as CanonicalObs
 from acrm_core.session_c.observation import ObservationLog
 
 
-def make_observation(number=1, *, offset_hours=0):
+def make_observation(number=1, *, offset_hours=0, context=None):
     return CanonicalObservation(
         observation_id=f"boundary-{number}",
         kind=ObservationKind.PRESSURE,
         description=f"pressure observation {number}",
         observed_at=datetime(2026, 8, 31, 12, number, tzinfo=timezone(timedelta(hours=offset_hours))),
-        context={"signal": "pressure"},
+        context=context if context is not None else {"signal": "pressure"},
     )
 
 
@@ -29,11 +29,19 @@ def test_observation_is_normalized_to_utc():
     assert item.observed_at_utc == item.observed_at
 
 
-def test_duplicate_observation_ids_are_rejected():
+def test_exact_duplicate_observation_ids_are_idempotent():
+    log = ObservationLog()
+    item = make_observation(1)
+    assert log.record(item) is True
+    assert log.record(make_observation(1)) is False
+    assert log.snapshot() == (item,)
+
+
+def test_conflicting_duplicate_observation_ids_are_rejected():
     log = ObservationLog()
     log.record(make_observation(1))
-    with pytest.raises(ValueError, match="duplicate observation_id"):
-        log.record(make_observation(1))
+    with pytest.raises(ValueError, match="conflicting observation_id"):
+        log.record(make_observation(1, context={"signal": "changed"}))
 
 
 def test_observation_has_no_judgment_fields():
@@ -43,3 +51,24 @@ def test_observation_has_no_judgment_fields():
     assert not hasattr(item, "topic")
     with pytest.raises(TypeError):
         item.context["score"] = 1.0
+
+
+def test_nested_context_is_deeply_immutable():
+    original = {"runtime": {"metrics": [1, 2], "tags": {"a", "b"}}}
+    item = make_observation(context=original)
+    original["runtime"]["metrics"].append(3)
+    original["runtime"]["tags"].add("c")
+    assert item.context["runtime"]["metrics"] == (1, 2)
+    assert item.context["runtime"]["tags"] == frozenset({"a", "b"})
+    with pytest.raises(TypeError):
+        item.context["runtime"]["metrics"][0] = 99
+    with pytest.raises(TypeError):
+        item.context["runtime"]["metrics"] = (9,)
+
+
+def test_opaque_context_objects_are_rejected():
+    class MutableBox:
+        pass
+
+    with pytest.raises(TypeError, match="unsupported"):
+        make_observation(context={"opaque": MutableBox()})

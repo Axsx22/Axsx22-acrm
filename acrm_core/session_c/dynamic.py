@@ -72,6 +72,7 @@ class EvolutionReadiness:
     state: str
     approach: ThresholdApproach
     persistence: float
+    signal_persistence: float
     observation_count: int
     ready: bool
     reason: str
@@ -162,6 +163,23 @@ class FieldEnvelopeEstimator:
         )
 
     @staticmethod
+    def _directional_persistence(values: list[float], direction: SignalDirection) -> float:
+        """Fraction of adjacent transitions that do not reverse the risk direction.
+
+        For high-risk signals, flat or increasing transitions count as persistent;
+        for low-risk signals, flat or decreasing transitions do. This is a numeric
+        descriptor, not semantic persistence or causal evidence.
+        """
+        if len(values) <= 1:
+            return 0.0
+        pairs = tuple(zip(values, values[1:]))
+        if direction == "high":
+            persistent = sum(current >= previous for previous, current in pairs)
+        else:
+            persistent = sum(current <= previous for previous, current in pairs)
+        return persistent / len(pairs)
+
+    @staticmethod
     def _quantile(values: list[float], quantile: float) -> float:
         if len(values) == 1:
             return values[0]
@@ -175,6 +193,19 @@ class FieldEnvelopeEstimator:
 
 class DynamicReadinessEvaluator:
     """Evaluate readiness relative to the envelope's signal direction."""
+
+    @staticmethod
+    def _directional_persistence(values: list[float], direction: SignalDirection) -> float:
+        """Fraction of adjacent transitions that do not reverse risk direction."""
+        if len(values) <= 1:
+            return 0.0
+        pairs = tuple(zip(values, values[1:]))
+        if direction == "high":
+            persistent = sum(current >= previous for previous, current in pairs)
+        else:
+            persistent = sum(current <= previous for previous, current in pairs)
+        return persistent / len(pairs)
+
 
     def evaluate(
         self,
@@ -196,7 +227,8 @@ class DynamicReadinessEvaluator:
             raise ValueError("direction must match envelope.direction")
 
         effective_direction = envelope.direction if direction is None else direction
-        profile = TrajectoryAnalyzer().profile(observations)
+        items = tuple(observations)
+        profile = TrajectoryAnalyzer().profile(items)
         value = float(current_value)
         if not isfinite(value):
             raise ValueError("current_value must be finite")
@@ -225,18 +257,26 @@ class DynamicReadinessEvaluator:
             state=state,
             distance_to_critical=distance_to_critical,
         )
+        numeric_history = [
+            float(item.context[envelope.metric_name])
+            for item in sorted(items, key=lambda item: item.observed_at_utc)
+            if isinstance(item.context.get(envelope.metric_name), (int, float))
+            and not isinstance(item.context.get(envelope.metric_name), bool)
+            and isfinite(float(item.context[envelope.metric_name]))
+        ]
+        signal_persistence = self._directional_persistence(numeric_history, effective_direction)
         ready = (
             profile.observation_count >= min_observations
             and state in {"WARNING", "CRITICAL"}
-            and profile.persistence >= persistence_floor
+            and signal_persistence >= persistence_floor
         )
 
         if state == "NORMAL":
             reason = "current signal remains inside the field-derived envelope"
         elif profile.observation_count < min_observations:
             reason = "insufficient trajectory history for an evolution signal"
-        elif profile.persistence < persistence_floor:
-            reason = "approach is not persistent enough in the observed trajectory"
+        elif signal_persistence < persistence_floor:
+            reason = "numeric signal direction is not persistent enough in the observed history"
         else:
             reason = (
                 "trajectory persistently approaches or occupies the "
@@ -247,6 +287,7 @@ class DynamicReadinessEvaluator:
             state=state,
             approach=approach,
             persistence=profile.persistence,
+            signal_persistence=signal_persistence,
             observation_count=profile.observation_count,
             ready=ready,
             reason=reason,

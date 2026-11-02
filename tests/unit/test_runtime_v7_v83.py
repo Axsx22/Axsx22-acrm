@@ -3,7 +3,11 @@ from datetime import datetime, timezone
 import pytest
 
 from acrm_core.runtime import FieldRuntime, SpecialistGovernance, parse_conversation
-from acrm_core.runtime.failure_taxonomy import Calibration, FAILURE_MODES, run_calibration_checks
+from acrm_core.runtime.failure_taxonomy import (
+    FAILURE_MODES,
+    Calibration,
+    run_calibration_checks,
+)
 
 
 def test_v7_failure_taxonomy_and_calibration_are_promoted():
@@ -74,3 +78,111 @@ def test_v83_does_not_freeze_when_evidence_is_directional():
 def test_runtime_rejects_short_input():
     with pytest.raises(ValueError):
         FieldRuntime().evaluate(({"role": "user", "text": "only one"},))
+
+
+
+def test_runtime_governance_state_is_isolated_by_session_id():
+    runtime = FieldRuntime()
+    turns = (
+        {"role": "user", "text": "Explain the software system, API, and code."},
+        {"role": "model", "text": "The software system uses an API and code."},
+    )
+    first_a = runtime.evaluate(turns, session_id="session-a", sequence=1)
+    first_b = runtime.evaluate(turns, session_id="session-b", sequence=1)
+    second_a = runtime.evaluate(turns, session_id="session-a", sequence=2)
+    second_b = runtime.evaluate(turns, session_id="session-b", sequence=2)
+
+    assert first_a.governance.accumulator == first_b.governance.accumulator
+    assert second_a.governance.accumulator == second_b.governance.accumulator
+    assert second_a.governance.accumulator != first_a.governance.accumulator
+
+@pytest.mark.parametrize(
+    ("errors", "total", "exception"),
+    [
+        (-1, 10, ValueError),
+        (0, -1, ValueError),
+        (11, 10, ValueError),
+        (1.5, 10, TypeError),
+        (1, 10.0, TypeError),
+        (True, 1, TypeError),
+        (1, False, TypeError),
+    ],
+)
+def test_laplace_rejects_invalid_count_inputs(errors, total, exception):
+    with pytest.raises(exception):
+        Calibration.laplace(errors, total)
+
+
+def test_laplace_accepts_valid_boundary_counts():
+    assert Calibration.laplace(0, 0) == 1.0
+    assert Calibration.laplace(0, 10) == pytest.approx(1 / 12)
+    assert Calibration.laplace(10, 10) == pytest.approx(11 / 12)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_calibration_rejects_non_finite_inputs(value):
+    with pytest.raises(ValueError, match="finite"):
+        Calibration.platt(value)
+    with pytest.raises(ValueError, match="finite"):
+        Calibration.sigmoid_risk(value)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_calibration_rejects_boolean_inputs(value):
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.platt(value)
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.sigmoid_risk(value)
+
+
+def test_runtime_labels_legacy_governance_confidence_as_lexical_proxy():
+    turns = (
+        {"role": "user", "text": "Explain the system failure and recovery."},
+        {"role": "model", "text": "The system failure has a recovery path."},
+    )
+    result = FieldRuntime().evaluate(turns, session_id="proxy-semantics")
+    proxy = result.field_state.metrics["lexical_entropy_complement"]
+    assert proxy == pytest.approx(1.0 - result.last_entropy)
+    assert result.field_state.governance_confidence == pytest.approx(proxy)
+
+
+def test_parse_conversation_preserves_multiline_role_messages():
+    turns = parse_conversation(
+        "user: first line\n"
+        "second line\n"
+        "\n"
+        "third paragraph\n"
+        "model: response line\n"
+        "continued response"
+    )
+    assert len(turns) == 2
+    assert turns[0].role == "user"
+    assert turns[0].text == "first line\nsecond line\n\nthird paragraph"
+    assert turns[1].role == "model"
+    assert turns[1].text == "response line\ncontinued response"
+
+
+def test_parse_conversation_rejects_non_string_input():
+    with pytest.raises(TypeError, match="must be a string"):
+        parse_conversation(None)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_runtime_thresholds_reject_boolean_values(value):
+    with pytest.raises(TypeError, match="numeric"):
+        FieldRuntime(centroid_alpha=value)
+    with pytest.raises(TypeError, match="numeric"):
+        FieldRuntime(anomaly_threshold=value)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_runtime_thresholds_reject_non_finite_values(value):
+    with pytest.raises(ValueError, match="finite"):
+        FieldRuntime(centroid_alpha=value)
+    with pytest.raises(ValueError, match="finite"):
+        FieldRuntime(anomaly_threshold=value)
+
+
+def test_softmax_rejects_boolean_scores():
+    with pytest.raises(TypeError, match="bool"):
+        Calibration.softmax((1.0, True))

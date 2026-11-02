@@ -149,6 +149,32 @@ def test_zero_total_vote_weight_is_rejected():
     assert session.review_complete is True
 
 
+def test_duplicate_specialist_ids_cannot_inflate_weighted_vote():
+    session = make_session(
+        tolerance=EvolutionTolerance(generation_after=1, successful_tests_before_review=1),
+        vote_provider=lambda _candidate, _context: (
+            SpecialistVote("same-specialist", 1.0, 1.0, 1.0),
+            SpecialistVote("same-specialist", 1.0, 1.0, 1.0),
+        ),
+    )
+    session.record(observation(1))
+    session.generate_candidate()
+    decision = session.review(context())
+    assert decision.status == "REJECT_VOTE"
+    assert "duplicate" in decision.reason
+
+
+def test_tester_must_return_literal_boolean():
+    session = make_session(
+        tolerance=EvolutionTolerance(generation_after=1, successful_tests_before_review=1),
+        tester=lambda _: 1,
+    )
+    session.record(observation(1))
+    session.generate_candidate()
+    with pytest.raises(TypeError, match="literal bool"):
+        session.review(context())
+
+
 def test_review_cannot_be_repeated_after_final_decision():
     session = make_session(
         tolerance=EvolutionTolerance(generation_after=1, successful_tests_before_review=1)
@@ -196,6 +222,13 @@ def test_candidate_is_not_regenerated_when_new_observations_arrive():
     second = session.generate_candidate()
     assert first is second
     assert second.based_on == ("obs-1", "obs-2")
+
+
+def test_candidate_requires_unique_nonempty_evidence_ids():
+    with pytest.raises(ValueError, match="unique"):
+        EvolutionCandidate("bad", "source", ("obs-1", "obs-1"))
+    with pytest.raises(ValueError, match="non-empty"):
+        EvolutionCandidate("bad", "source", ("obs-1", ""))
 
 
 def test_tolerance_rejects_invalid_values():

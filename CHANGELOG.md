@@ -4,6 +4,17 @@ All notable repository changes are recorded here. Version labels distinguish imp
 
 ## [Unreleased]
 
+### Fixed
+- Preserve multiline content within role-prefixed conversation turns instead of splitting continuation lines into separate user turns.\n- Reject Boolean and non-finite Runtime threshold configuration and Boolean softmax scores.\n- Reject invalid Laplace count pairs where errors exceed total, including Boolean and non-integer counts.
+- Reject non-finite and Boolean inputs in Platt and sigmoid-risk calibration helpers.
+- Remove an unnecessary optional dependency constraint that caused Python 3.10 CI installation failure.
+- Preserve strict Session C tester-result and unique-specialist vote checks with direct regression coverage.
+
+### Clarified
+- Expose the Runtime's lexical-entropy complement under an explicit metric name while retaining the legacy `governance_confidence` field for compatibility.
+- Document that lexical/statistical Runtime indicators, configured specialist weights, and numerical calibration checks are not empirically validated measures.
+
+
 ### Added
 - Engineering governance and evidence policy in `docs/ENGINEERING_GOVERNANCE.md`.
 - Deterministic external reviewer path in `docs/EXTERNAL_REVIEW_PATH.md`, including clean-checkout reproduction, review gates, evidence classification, and reviewer checklist.

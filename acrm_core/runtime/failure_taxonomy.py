@@ -7,10 +7,11 @@ without carrying over browser/UI state or simulated presentation values.
 
 from __future__ import annotations
 
+import itertools
+import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-import math
-from typing import Any, Sequence
 
 
 class FailureSeverity(str, Enum):
@@ -59,22 +60,50 @@ class Calibration:
     RISK_S0 = 0.65
 
     @staticmethod
+    def _finite_numeric(value: float, name: str) -> float:
+        if isinstance(value, bool):
+            raise TypeError(f"{name} must be numeric, not bool")
+        try:
+            converted = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise TypeError(f"{name} must be convertible to a finite number") from exc
+        if not math.isfinite(converted):
+            raise ValueError(f"{name} must be finite")
+        return converted
+
+    @staticmethod
     def _sigmoid(z: float) -> float:
+        # Finite inputs may overflow during multiplication; saturation is
+        # intentional here, while NaN is rejected at the public input boundary.
         z = max(-500.0, min(500.0, float(z)))
         return 1.0 / (1.0 + math.exp(-z))
 
     @classmethod
     def platt(cls, raw: float) -> float:
-        return cls._sigmoid(cls.PLATT_A * float(raw) + cls.PLATT_B)
+        value = cls._finite_numeric(raw, "raw")
+        return cls._sigmoid(cls.PLATT_A * value + cls.PLATT_B)
 
     @classmethod
     def sigmoid_risk(cls, stability: float) -> float:
-        return cls._sigmoid(cls.RISK_K * (float(stability) - cls.RISK_S0))
+        value = cls._finite_numeric(stability, "stability")
+        return cls._sigmoid(cls.RISK_K * (value - cls.RISK_S0))
 
     @staticmethod
     def laplace(errors: int, total: int) -> float:
+        """Return the Laplace-smoothed error rate for valid integer counts.
+
+        The zero-sample convention is retained for compatibility: (0, 0)
+        returns 1.0. This is a numerical smoothing rule, not empirical
+        calibration of a model's confidence.
+        """
+        if isinstance(errors, bool) or not isinstance(errors, int):
+            raise TypeError("errors must be an integer")
+        if isinstance(total, bool) or not isinstance(total, int):
+            raise TypeError("total must be an integer")
         if total < 0 or errors < 0:
             raise ValueError("errors and total must be non-negative")
+        if errors > total:
+            raise ValueError("errors cannot exceed total")
         if total == 0:
             return 1.0
         return (errors + 1) / (total + 2)
@@ -83,7 +112,7 @@ class Calibration:
     def softmax(scores: Sequence[float]) -> tuple[float, ...]:
         if not scores:
             raise ValueError("softmax input cannot be empty")
-        values = [float(s) for s in scores]
+        values = [Calibration._finite_numeric(score, "softmax score") for score in scores]
         if not all(math.isfinite(s) for s in values):
             raise ValueError("softmax scores must be finite")
         maximum = max(values)
@@ -96,7 +125,7 @@ def run_calibration_checks() -> dict[str, bool]:
     """Run the six computational checks represented by the v7 runtime UI."""
     raw = (0.1, 0.3, 0.5, 0.7, 0.9)
     platt = tuple(Calibration.platt(x) for x in raw)
-    monotonic = all(a < b for a, b in zip(platt, platt[1:]))
+    monotonic = all(a < b for a, b in itertools.pairwise(platt))
 
     s1, s2 = 0.64, 0.66
     slope = abs(Calibration.sigmoid_risk(s2) - Calibration.sigmoid_risk(s1)) / (s2 - s1)

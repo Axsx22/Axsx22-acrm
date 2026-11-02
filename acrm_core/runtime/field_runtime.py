@@ -8,15 +8,17 @@ state are deliberately excluded.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import math
 import re
-from typing import Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from acrm_core.field.state import FieldState
 from acrm_core.session_c.observation import EvolutionObservation, ObservationKind
-from .failure_taxonomy import Calibration, FAILURE_MODES
+
+from .failure_taxonomy import FAILURE_MODES, Calibration
 from .specialist_governance import GovernanceResult, SpecialistGovernance
 
 
@@ -27,13 +29,41 @@ class Turn:
 
 
 def parse_conversation(raw: str) -> tuple[Turn, ...]:
+    """Parse role-prefixed turns while preserving multiline message bodies.
+
+    Unprefixed non-empty lines before the first explicit role marker retain
+    the legacy behavior and are treated as individual user turns. Once a
+    role-prefixed turn begins, subsequent unprefixed lines (including blank
+    lines) belong to that message until the next role marker.
+    """
+    if not isinstance(raw, str):
+        raise TypeError("raw conversation must be a string")
+
     turns: list[Turn] = []
+    active_role: str | None = None
+    active_lines: list[str] = []
+
+    def flush_active() -> None:
+        nonlocal active_role, active_lines
+        if active_role is not None:
+            body = "\n".join(active_lines).strip()
+            if body:
+                turns.append(Turn(active_role, body))
+        active_role = None
+        active_lines = []
+
     for line in raw.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        match = re.match(r"^(user|model)\s*:\s*(.*)$", line, flags=re.I)
-        turns.append(Turn(match.group(1).lower(), match.group(2)) if match else Turn("user", line))
+        match = re.match(r"^(user|model)\s*:\s*(.*)$", line.strip(), flags=re.IGNORECASE)
+        if match:
+            flush_active()
+            active_role = match.group(1).lower()
+            active_lines = [match.group(2)]
+        elif active_role is not None:
+            active_lines.append(line)
+        elif line.strip():
+            turns.append(Turn("user", line.strip()))
+
+    flush_active()
     return tuple(turns)
 
 
@@ -81,19 +111,51 @@ class RuntimeEvaluation:
     field_state: FieldState
     observations: tuple[EvolutionObservation, ...]
     governance: GovernanceResult | None = None
+    runtime_id: str = ""
 
 
 class FieldRuntime:
-    """Pure behavioral evaluator with optional persistent v8.3 governance."""
+    """Lexical/statistical evaluator with optional stateful specialist governance.
 
-    def __init__(self, *, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
-        if not 0.0 < centroid_alpha <= 1.0:
+    The current FieldState.governance_confidence value is populated from
+    1 - normalized lexical entropy for legacy compatibility. It is only a
+    bounded lexical-entropy-complement proxy; it is not a probability,
+    calibrated confidence, semantic certainty, or the specialist vote result.
+    """
+
+    def __init__(self, *, runtime_id: str | None = None, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
+        for name, value in (("centroid_alpha", centroid_alpha), ("anomaly_threshold", anomaly_threshold)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError(f"{name} must be numeric")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+        if not 0.0 < float(centroid_alpha) <= 1.0:
             raise ValueError("centroid_alpha must be in (0, 1]")
-        if anomaly_threshold < 0.0:
+        if float(anomaly_threshold) < 0.0:
             raise ValueError("anomaly_threshold must be non-negative")
+        if runtime_id is not None and (not isinstance(runtime_id, str) or not runtime_id.strip()):
+            raise ValueError("runtime_id must be a non-empty string when supplied")
+        self.runtime_id = runtime_id or str(uuid4())
         self.governance = governance or SpecialistGovernance()
+        self._governance_by_session: dict[str, SpecialistGovernance] = {}
+        self._governance_template_claimed = False
         self.anomaly_threshold = anomaly_threshold
         self.centroid_alpha = centroid_alpha
+
+    def _governance_for_session(self, session_id: str) -> SpecialistGovernance:
+        """Return governance state isolated to one Runtime session."""
+        if session_id not in self._governance_by_session:
+            if not self._governance_template_claimed:
+                instance = self.governance
+                self._governance_template_claimed = True
+            else:
+                instance = SpecialistGovernance(reasoner=self.governance.reasoner)
+            self._governance_by_session[session_id] = instance
+        return self._governance_by_session[session_id]
+
+    def close_session(self, session_id: str) -> bool:
+        """Release in-memory governance state for a completed Runtime session."""
+        return self._governance_by_session.pop(session_id, None) is not None
 
     def evaluate(self, turns: Iterable[Turn | Mapping[str, str]], *, field_id: str = "runtime", session_id: str = "runtime", sequence: int = 0, timestamp: datetime | None = None) -> RuntimeEvaluation:
         normalized = tuple(t if isinstance(t, Turn) else Turn(str(t.get("role", "user")), str(t.get("text", ""))) for t in turns)
@@ -129,17 +191,19 @@ class FieldRuntime:
         active = list(dict.fromkeys(active))
 
         metrics = {"avgS": avg_s, "avgRho": avg_rho, "lastH": last_h, "RS": resilience, "anomalyIdx": anomaly}
-        governance = self.governance.evaluate(tuple({"role": t.role, "text": t.text} for t in normalized), metrics)
-        confidence = max(0.0, min(1.0, 1.0 - last_h))
+        governance = self._governance_for_session(session_id).evaluate(tuple({"role": t.role, "text": t.text} for t in normalized), metrics)
+        # Legacy FieldState field: this is a lexical-entropy complement only.
+        # It must not be interpreted as calibrated governance confidence.
+        lexical_entropy_complement = max(0.0, min(1.0, 1.0 - last_h))
         now = timestamp or datetime.now(timezone.utc)
         field = FieldState(
             field_id=field_id,
             session_id=session_id,
             sequence=sequence,
             timestamp=now,
-            metrics={"S": avg_s, "rho": avg_rho, "delta": avg_delta, "H": last_h, "RS": resilience, "A": governance.accumulator},
+            metrics={"S": avg_s, "rho": avg_rho, "delta": avg_delta, "H": last_h, "RS": resilience, "A": governance.accumulator, "lexical_entropy_complement": lexical_entropy_complement},
             failure_modes=tuple(active),
-            governance_confidence=confidence,
+            governance_confidence=lexical_entropy_complement,
         )
         observations = (
             EvolutionObservation(f"{session_id}:{sequence}:stability", ObservationKind.PRESSURE if avg_s < 0.5 else ObservationKind.EVOLUTION_SIGNAL, "Sequential field stability was measured from adjacent turns.", now, {"S": avg_s, "rho": avg_rho}, "field_runtime"),
@@ -147,7 +211,7 @@ class FieldRuntime:
         )
         if anomaly != -1:
             observations += (EvolutionObservation(f"{session_id}:{sequence}:anomaly", ObservationKind.FAILURE, "A deviation from the sequential similarity baseline was observed.", now, {"anomaly_index": anomaly, "threshold": self.anomaly_threshold}, "field_runtime"),)
-        return RuntimeEvaluation(normalized, sequential, tuple(coherence), gaps, entropies, avg_s, avg_rho, avg_delta, last_h, resilience, anomaly, tuple(active), field, observations, governance)
+        return RuntimeEvaluation(normalized, sequential, tuple(coherence), gaps, entropies, avg_s, avg_rho, avg_delta, last_h, resilience, anomaly, tuple(active), field, observations, governance, self.runtime_id)
 
     @staticmethod
     def calibration() -> dict[str, bool]:

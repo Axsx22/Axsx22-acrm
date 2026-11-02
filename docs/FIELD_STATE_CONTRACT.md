@@ -14,6 +14,20 @@
 - `failure_modes`: tuple of unique, non-empty identifiers.
 - `governance_confidence`: finite numeric value in `[0.0, 1.0]`.
 
+## Producer-specific semantics
+
+The `governance_confidence` field is a legacy, bounded confidence-like slot. Its name does not guarantee that every producer supplies a calibrated probability, a specialist-consensus score, or a validated estimate of governance confidence.
+
+For the current `FieldRuntime` producer, the value is populated as:
+
+```text
+lexical_entropy_complement = 1 - normalized_lexical_entropy
+```
+
+The Runtime also records this quantity under `metrics["lexical_entropy_complement"]` so its actual meaning is explicit. It is a lexical/statistical proxy only. It must not be interpreted as semantic certainty, model confidence, or empirical calibration.
+
+Consumers should prefer the explicitly named metric when interpreting current Runtime output. Any future producer that assigns a different meaning to the legacy field must document that meaning separately.
+
 ## Immutability
 
 The dataclass is frozen. Metric storage is wrapped in a read-only mapping and failure modes are normalized to a tuple, so the recorded state cannot be mutated through ordinary field or mapping assignment.

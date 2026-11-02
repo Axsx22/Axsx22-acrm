@@ -31,5 +31,26 @@ jobs:
       - name: Install package and test dependencies
         run: python -m pip install -e ".[test]"
 
-      - name: Run tests
-        run: python -m pytest -q
+      - name: Compile source and tests
+        run: python -m compileall -q acrm_core tests
+
+      - name: Static lint (changed Runtime surface)
+        run: >-
+          python -m ruff check
+          acrm_core/runtime/failure_taxonomy.py
+          acrm_core/runtime/field_runtime.py
+          acrm_core/runtime/specialist_governance.py
+          tests/unit/test_runtime_v7_v83.py
+
+      - name: Security static analysis
+        run: python -m bandit -q -r acrm_core -ll
+
+      - name: Run tests with coverage
+        run: python -m pytest --cov=acrm_core --cov-report=term-missing --cov-report=xml -ra
+
+      - name: Prepare third-party dependency audit input
+        run: python -m pip freeze | grep -v -E '^(acrm-core==|-e )' > /tmp/acrm-audit-requirements.txt
+
+      - name: Audit third-party dependencies
+        if: matrix.python-version != '3.10'
+        run: python -m pip_audit --strict -r /tmp/acrm-audit-requirements.txt
