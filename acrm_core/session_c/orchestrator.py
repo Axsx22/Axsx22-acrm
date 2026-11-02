@@ -413,14 +413,37 @@ class SessionCEngine:
             persistence_floor=self.persistence_floor, direction=self.direction,
         )
         topic = FieldDrivenTopicEngine().infer(items)
-        gaps = tuple(self._sequence_gaps)
-        sequences = sorted(self._accepted_sequences)
-        scope_start = sequences[0] if sequences else None
-        scope_end = sequences[-1] if sequences else None
+        # Freeze the analysis denominator to sequences known by this as_of time.
+        # _accepted_sequences stores observer receipt time, not the event's claimed
+        # production timestamp, so future arrivals cannot expand a past scope.
+        scoped_sequences = sorted(
+            number
+            for number, (_, received_at) in self._accepted_sequences.items()
+            if received_at <= evaluated_at
+        )
+        scope_start = scoped_sequences[0] if scoped_sequences else None
+        scope_end = scoped_sequences[-1] if scoped_sequences else None
         expected = (scope_end - scope_start + 1) if scope_start is not None else 0
+
+        # Reconstruct each visible Gap from its original OPEN members plus only
+        # audit transitions that had occurred by the requested analysis time.
+        historical_gaps = []
+        for gap in self._sequence_gaps:
+            if gap.detected_at > evaluated_at:
+                continue
+            states = {number: "OPEN" for number in range(gap.start_sequence, gap.end_sequence + 1)}
+            for event in self._gap_audit_events:
+                if event.gap_id == gap.gap_id and event.occurred_at <= evaluated_at:
+                    states[event.sequence] = event.new_status
+            historical_gaps.append(SequenceGap(
+                gap.start_sequence, gap.end_sequence, gap.previous_sequence,
+                gap.next_sequence, gap.detected_at, gap.gap_id, states,
+            ))
+        gaps = tuple(historical_gaps)
+
         available = {
-            number for number, (_, event_time) in self._accepted_sequences.items()
-            if event_time <= evaluated_at
+            number for number, (_, received_at) in self._accepted_sequences.items()
+            if received_at <= evaluated_at
         }
         available.update(
             sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
