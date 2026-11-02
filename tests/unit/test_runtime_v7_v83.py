@@ -14,6 +14,35 @@ def test_v7_failure_taxonomy_and_calibration_are_promoted():
     assert abs(sum(Calibration.softmax((1, 2, 3))) - 1.0) < 1e-9
 
 
+@pytest.mark.parametrize(
+    ("errors", "total", "exception"),
+    [
+        (2, 1, ValueError),
+        (-1, 2, ValueError),
+        (1, -2, ValueError),
+        (1.5, 2, TypeError),
+        (1, 2.5, TypeError),
+        (True, 2, TypeError),
+        (1, False, TypeError),
+    ],
+)
+def test_laplace_rejects_invalid_counts(errors, total, exception):
+    with pytest.raises(exception):
+        Calibration.laplace(errors, total)
+
+
+def test_laplace_accepts_valid_boundary_counts():
+    assert Calibration.laplace(0, 0) == 1.0
+    assert Calibration.laplace(0, 10) == pytest.approx(1 / 12)
+    assert Calibration.laplace(10, 10) == pytest.approx(11 / 12)
+
+
+@pytest.mark.parametrize("threshold", [float("nan"), float("inf"), float("-inf")])
+def test_runtime_rejects_non_finite_anomaly_threshold(threshold):
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        FieldRuntime(anomaly_threshold=threshold)
+
+
 def test_v7_runtime_uses_real_turns_and_records_observations():
     turns = parse_conversation(
         "user: explain the system failure\n"

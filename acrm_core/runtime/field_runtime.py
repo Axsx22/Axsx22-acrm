@@ -89,8 +89,8 @@ class FieldRuntime:
     def __init__(self, *, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
         if not 0.0 < centroid_alpha <= 1.0:
             raise ValueError("centroid_alpha must be in (0, 1]")
-        if anomaly_threshold < 0.0:
-            raise ValueError("anomaly_threshold must be non-negative")
+        if not math.isfinite(anomaly_threshold) or anomaly_threshold < 0.0:
+            raise ValueError("anomaly_threshold must be finite and non-negative")
         self.governance = governance or SpecialistGovernance()
         self.anomaly_threshold = anomaly_threshold
         self.centroid_alpha = centroid_alpha
@@ -101,7 +101,8 @@ class FieldRuntime:
             raise ValueError("at least 2 turns are required")
         vectors = tuple(_vector(_tokens(t.text)) for t in normalized)
         sequential = tuple(_cosine(vectors[i], vectors[i - 1]) for i in range(1, len(vectors)))
-        centroid = dict(vectors[0]); coherence: list[float] = []
+        centroid = dict(vectors[0])
+        coherence: list[float] = []
         for vector in vectors[1:]:
             coherence.append(_cosine(vector, centroid))
             keys = set(centroid) | set(vector)
@@ -122,10 +123,14 @@ class FieldRuntime:
         resilience = max(0.0, 1.0 - abs(ema - avg_s))
 
         active: list[str] = []
-        if anomaly != -1: active.extend(("FM-05", "FM-15"))
-        if avg_s < 0.3: active.extend(("FM-04", "FM-07"))
-        if last_h > 0.8: active.extend(("FM-03", "FM-16"))
-        if not active and avg_s < 0.5: active.append("FM-12")
+        if anomaly != -1:
+            active.extend(("FM-05", "FM-15"))
+        if avg_s < 0.3:
+            active.extend(("FM-04", "FM-07"))
+        if last_h > 0.8:
+            active.extend(("FM-03", "FM-16"))
+        if not active and avg_s < 0.5:
+            active.append("FM-12")
         active = list(dict.fromkeys(active))
 
         metrics = {"avgS": avg_s, "avgRho": avg_rho, "lastH": last_h, "RS": resilience, "anomalyIdx": anomaly}
