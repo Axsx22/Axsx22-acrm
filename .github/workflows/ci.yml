@@ -49,5 +49,4 @@ jobs:
         run: python -m pip freeze | grep -v -E '^(acrm-core==|-e )' > /tmp/acrm-audit-requirements.txt
 
       - name: Audit third-party dependencies
-        if: matrix.python-version != '3.10'
         run: python -m pip_audit --strict -r /tmp/acrm-audit-requirements.txt
