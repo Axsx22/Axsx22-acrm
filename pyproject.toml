@@ -16,7 +16,10 @@ dependencies = []
 
 [project.optional-dependencies]
 test = [
-    "pytest>=8,<9"
+    "pytest>=8,<9",
+    "pytest-cov>=5,<7",
+    "ruff>=0.9,<1",
+    "pip-audit>=2.7,<3"
 ]
 
 [tool.setuptools.packages.find]
