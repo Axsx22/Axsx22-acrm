@@ -89,8 +89,8 @@ class FieldRuntime:
     def __init__(self, *, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
         if not 0.0 < centroid_alpha <= 1.0:
             raise ValueError("centroid_alpha must be in (0, 1]")
-        if anomaly_threshold < 0.0:
-            raise ValueError("anomaly_threshold must be non-negative")
+        if not math.isfinite(anomaly_threshold) or anomaly_threshold < 0.0:
+            raise ValueError("anomaly_threshold must be finite and non-negative")
         self.governance = governance or SpecialistGovernance()
         self.anomaly_threshold = anomaly_threshold
         self.centroid_alpha = centroid_alpha
