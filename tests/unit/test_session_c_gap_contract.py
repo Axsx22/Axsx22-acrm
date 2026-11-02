@@ -10,6 +10,7 @@ import pytest
 
 from acrm_core.runtime.field_runtime import FieldRuntime, Turn
 from acrm_core.session_c.orchestrator import SessionCEngine
+from acrm_core.session_c.observation import EvolutionObservation, ObservationKind
 from acrm_core.evolution.session_c import EvolutionCandidate, SpecialistVote
 
 
@@ -397,3 +398,70 @@ def test_GAP_031_future_sequence_does_not_expand_past_analysis_scope():
     assert len(current.sequence_gaps) == 2
     assert (current.sequence_gaps[-1].start_sequence,
             current.sequence_gaps[-1].end_sequence) == (13, 14)
+
+
+def test_GAP_032_all_analysis_outputs_are_isolated_from_future_receipts():
+    initial_time = datetime.now(timezone.utc)
+    initial_observations = tuple(
+        EvolutionObservation(
+            observation_id=f"seed-{index}",
+            kind=ObservationKind.AMBIGUITY,
+            description=f"Initial metric sample {index}",
+            observed_at=initial_time - timedelta(seconds=10 - index),
+            context={"S": value},
+            source="gap-032-seed",
+        )
+        for index, value in enumerate((0.1, 0.2, 0.3), start=1)
+    )
+    engine = SessionCEngine(
+        observations=initial_observations,
+        metric_name="S",
+        current_value=-999.0,
+        min_observations=1,
+        generator=_generator,
+        tester=lambda candidate: True,
+        vote_provider=lambda candidate, context: (
+            SpecialistVote("gap-032-reviewer", 1.0, 1.0, 1.0),
+        ),
+    )
+
+    # T is after the seed state has been received by Session C.
+    analysis_time = datetime.now(timezone.utc)
+    historical_before = engine.analyze(as_of=analysis_time)
+
+    # Both the event timestamp and the observation timestamps predate T,
+    # but the observer receives these records only after T. They must not
+    # be retroactively visible in the historical analysis.
+    late_event_time = analysis_time - timedelta(seconds=1)
+    runtime = FieldRuntime(runtime_id="gap-runtime-32")
+    evaluation = _evaluation(
+        runtime, 1, timestamp=late_event_time,
+    )
+    engine.observe_runtime(evaluation)
+
+    for index, value in enumerate((10.0, 20.0, 30.0, 40.0, 50.0), start=1):
+        engine.record(EvolutionObservation(
+            observation_id=f"gap-contract-session:late:{index}",
+            kind=ObservationKind.MISSING_CAPABILITY,
+            description=f"Late-arriving metric sample {index}",
+            observed_at=late_event_time,
+            context={"S": value},
+            source="gap-032-late-source",
+        ))
+
+    historical_after = engine.analyze(as_of=analysis_time)
+    current = engine.analyze()
+
+    # The entire historical result, not just Gap completeness, is stable.
+    assert historical_after == historical_before
+    assert historical_after.topic.dominant.topic == "ambiguity_resolution"
+    assert historical_after.envelope.sample_count == 3
+    assert historical_after.readiness.observation_count == 3
+    assert historical_after.readiness.approach.value == -999.0
+
+    # Current analysis sees the new evidence and the Runtime's latest value.
+    assert current.topic.dominant.topic == "capability_gap"
+    assert current.envelope.sample_count > historical_after.envelope.sample_count
+    assert current.readiness.observation_count > historical_after.readiness.observation_count
+    assert current.readiness.approach.value == evaluation.field_state.metrics["S"]
+    assert current.readiness.approach.value != historical_after.readiness.approach.value
