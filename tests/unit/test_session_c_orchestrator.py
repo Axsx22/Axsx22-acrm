@@ -112,5 +112,42 @@ def test_engine_rejects_duplicate_runtime_observation_delivery():
         sequence=1,
     )
     engine.observe_runtime(evaluation)
-    with pytest.raises(ValueError, match="duplicate observation_id"):
-        engine.observe_runtime(evaluation)
+    assert engine.observe_runtime(evaluation) == 0
+
+
+def test_engine_rejects_cross_session_delivery():
+    runtime = FieldRuntime()
+    engine = SessionCEngine(
+        metric_name="S", generator=generator, tester=candidate_tester,
+        vote_provider=votes,
+    )
+    turns = (
+        Turn("user", "Explain a software system."),
+        Turn("model", "A software system has components."),
+    )
+    a = runtime.evaluate(turns, field_id="runtime-a", session_id="session-a", sequence=1)
+    b = runtime.evaluate(turns, field_id="runtime-a", session_id="session-b", sequence=1)
+    engine.observe_runtime(a)
+    before = engine.observations
+    with pytest.raises(ValueError, match="different Runtime/Session"):
+        engine.observe_runtime(b)
+    assert engine.observations == before
+
+
+def test_engine_rejects_out_of_order_delivery_atomically():
+    runtime = FieldRuntime()
+    engine = SessionCEngine(
+        metric_name="S", generator=generator, tester=candidate_tester,
+        vote_provider=votes,
+    )
+    turns = (
+        Turn("user", "Explain a software system."),
+        Turn("model", "A software system has components."),
+    )
+    later = runtime.evaluate(turns, session_id="ordered", sequence=2)
+    earlier = runtime.evaluate(turns, session_id="ordered", sequence=1)
+    engine.observe_runtime(later)
+    before = engine.observations
+    with pytest.raises(ValueError, match="out-of-order"):
+        engine.observe_runtime(earlier)
+    assert engine.observations == before
