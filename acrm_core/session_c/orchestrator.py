@@ -7,7 +7,12 @@ separate deployment concerns.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
+from datetime import datetime, timezone
+from enum import Enum
+import hashlib
+import json
+import math
 from typing import Iterable
 
 from acrm_core.evolution.session_c import (
@@ -21,6 +26,48 @@ from acrm_core.session_c.dynamic import (
 )
 from acrm_core.session_c.observation import ObservationLog
 from acrm_core.session_c.topic import FieldDrivenTopicEngine, TopicProfile
+
+
+CANONICALIZATION_VERSION = 1
+
+
+def _canonical_value(value):
+    if is_dataclass(value):
+        return {item.name: _canonical_value(getattr(value, item.name)) for item in fields(value)}
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("canonical timestamps must be timezone-aware")
+        return value.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    if isinstance(value, dict) or hasattr(value, "items"):
+        return {str(key): _canonical_value(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+    if isinstance(value, (tuple, list)):
+        return [_canonical_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        return sorted((_canonical_value(item) for item in value), key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("canonical payload cannot contain non-finite floats")
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(f"unsupported canonical payload value: {type(value).__name__}")
+
+
+def runtime_evaluation_digest(evaluation: RuntimeEvaluation) -> str:
+    payload = {"canonicalization_version": CANONICALIZATION_VERSION, "evaluation": _canonical_value(evaluation)}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class SequenceGap:
+    start_sequence: int
+    end_sequence: int
+    previous_sequence: int
+    next_sequence: int
+    detected_at: datetime
+    status: str = "open"
+    resolved_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +107,7 @@ class SessionCEngine:
         self._runtime_identity = None
         self._runtime_batches = {}
         self._last_sequence = None
+        self._sequence_gaps: list[SequenceGap] = []
         self._closed = False
 
     @property
@@ -80,7 +128,9 @@ class SessionCEngine:
             raise RuntimeError("Session C session is closed")
         if not isinstance(evaluation, RuntimeEvaluation):
             raise TypeError("evaluation must be a RuntimeEvaluation")
-        runtime_id = evaluation.field_state.field_id
+        runtime_id = evaluation.runtime_id
+        if not isinstance(runtime_id, str) or not runtime_id.strip():
+            raise ValueError("RuntimeEvaluation must carry an explicit runtime_id")
         session_id = evaluation.field_state.session_id
         sequence = evaluation.field_state.sequence
         if not runtime_id or not session_id or sequence < 0:
@@ -97,22 +147,50 @@ class SessionCEngine:
         if not math.isfinite(metric_value):
             raise ValueError("Runtime metric value must be finite")
         batch_key = (runtime_id, session_id, sequence)
-        fingerprint = (tuple(item.observation_id for item in evaluation.observations), metric_value)
+        fingerprint = runtime_evaluation_digest(evaluation)
         previous = self._runtime_batches.get(batch_key)
         if previous is not None:
             if previous != fingerprint:
                 raise ValueError("conflicting replay for Runtime sequence")
             return 0
+        late_gap_index = None
         if self._last_sequence is not None and sequence <= self._last_sequence:
-            raise ValueError("out-of-order Runtime sequence")
+            late_gap_index = next((i for i, gap in enumerate(self._sequence_gaps) if gap.status == "open" and gap.start_sequence <= sequence <= gap.end_sequence), None)
+            if late_gap_index is None:
+                raise ValueError("out-of-order Runtime sequence")
         for item in evaluation.observations:
             if not item.observation_id.startswith(f"{session_id}:{sequence}:"):
                 raise ValueError("Runtime observation identity does not match its batch")
+        # Validate and stage every state change before the in-memory commit point.
+        staged_gaps = list(self._sequence_gaps)
+        now = datetime.now(timezone.utc)
+        if late_gap_index is not None:
+            gap = staged_gaps[late_gap_index]
+            if gap.start_sequence == gap.end_sequence:
+                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "compensated", now)
+            elif sequence == gap.start_sequence:
+                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence + 1, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "open", None)
+            elif sequence == gap.end_sequence:
+                staged_gaps[late_gap_index] = SequenceGap(gap.start_sequence, gap.end_sequence - 1, gap.previous_sequence, gap.next_sequence, gap.detected_at, "open", None)
+            else:
+                staged_gaps[late_gap_index:late_gap_index + 1] = [
+                    SequenceGap(gap.start_sequence, sequence - 1, gap.previous_sequence, gap.next_sequence, gap.detected_at),
+                    SequenceGap(sequence + 1, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at),
+                ]
+        elif self._last_sequence is not None and sequence > self._last_sequence + 1:
+            staged_gaps.append(SequenceGap(self._last_sequence + 1, sequence - 1, self._last_sequence, sequence, now))
+        # record_many validates the complete batch before mutating its log.
         added = self._observation_log.record_many(evaluation.observations)
         self._runtime_batches[batch_key] = fingerprint
-        self._last_sequence = sequence
-        self.current_value = metric_value
+        self._sequence_gaps = staged_gaps
+        if self._last_sequence is None or sequence > self._last_sequence:
+            self._last_sequence = sequence
+            self.current_value = metric_value
         return added
+
+    @property
+    def sequence_gaps(self) -> tuple[SequenceGap, ...]:
+        return tuple(self._sequence_gaps)
 
     def close(self) -> None:
         """Close this in-memory observer; durable recovery is not provided."""

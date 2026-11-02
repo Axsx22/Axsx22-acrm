@@ -9,6 +9,7 @@ state are deliberately excluded.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import uuid4
 from datetime import datetime, timezone
 import math
 import re
@@ -81,16 +82,20 @@ class RuntimeEvaluation:
     field_state: FieldState
     observations: tuple[EvolutionObservation, ...]
     governance: GovernanceResult | None = None
+    runtime_id: str = ""
 
 
 class FieldRuntime:
     """Pure behavioral evaluator with optional persistent v8.3 governance."""
 
-    def __init__(self, *, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
+    def __init__(self, *, runtime_id: str | None = None, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
         if not 0.0 < centroid_alpha <= 1.0:
             raise ValueError("centroid_alpha must be in (0, 1]")
         if anomaly_threshold < 0.0:
             raise ValueError("anomaly_threshold must be non-negative")
+        if runtime_id is not None and (not isinstance(runtime_id, str) or not runtime_id.strip()):
+            raise ValueError("runtime_id must be a non-empty string when supplied")
+        self.runtime_id = runtime_id or str(uuid4())
         self.governance = governance or SpecialistGovernance()
         self._governance_by_session: dict[str, SpecialistGovernance] = {}
         self._governance_template_claimed = False
@@ -164,7 +169,7 @@ class FieldRuntime:
         )
         if anomaly != -1:
             observations += (EvolutionObservation(f"{session_id}:{sequence}:anomaly", ObservationKind.FAILURE, "A deviation from the sequential similarity baseline was observed.", now, {"anomaly_index": anomaly, "threshold": self.anomaly_threshold}, "field_runtime"),)
-        return RuntimeEvaluation(normalized, sequential, tuple(coherence), gaps, entropies, avg_s, avg_rho, avg_delta, last_h, resilience, anomaly, tuple(active), field, observations, governance)
+        return RuntimeEvaluation(normalized, sequential, tuple(coherence), gaps, entropies, avg_s, avg_rho, avg_delta, last_h, resilience, anomaly, tuple(active), field, observations, governance, self.runtime_id)
 
     @staticmethod
     def calibration() -> dict[str, bool]:
