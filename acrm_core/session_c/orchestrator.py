@@ -184,8 +184,10 @@ class SessionCEngine:
     ) -> None:
         self._lock = RLock()
         self._ingest_sequence = 0
+        self._ingest_received_at: dict[int, datetime] = {}
         self._observation_log = ObservationLog()
         initialized_at = datetime.now(timezone.utc)
+        self._ingest_received_at[0] = initialized_at
         self._observation_received_at: dict[str, datetime] = {}
         self._observation_ingest_sequence: dict[str, int] = {}
         for observation in observations:
@@ -236,6 +238,7 @@ class SessionCEngine:
             if value is not None:
                 self._current_value_history.append((float(value), received_at, next_sequence))
             self._ingest_sequence = next_sequence
+            self._ingest_received_at[next_sequence] = received_at
 
     @property
     def observations(self) -> tuple[EvolutionObservation, ...]:
@@ -338,6 +341,7 @@ class SessionCEngine:
         self._observation_received_at = staged_observation_receipts
         self._observation_ingest_sequence = staged_observation_sequences
         self._ingest_sequence = next_ingest_sequence
+        self._ingest_received_at[next_ingest_sequence] = now
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
@@ -486,7 +490,7 @@ class SessionCEngine:
             raise ValueError("analysis as_of must be timezone-aware")
         evaluated_at = evaluated_at.astimezone(timezone.utc)
         if as_of_ingest_sequence is None:
-            snapshot_sequence = self._ingest_sequence
+            snapshot_sequence = max((sequence for sequence, received_at in self._ingest_received_at.items() if received_at <= evaluated_at), default=0)
         else:
             if isinstance(as_of_ingest_sequence, bool) or not isinstance(as_of_ingest_sequence, int) or as_of_ingest_sequence < 0:
                 raise ValueError("as_of_ingest_sequence must be a non-negative integer")
