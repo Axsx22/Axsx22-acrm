@@ -73,8 +73,19 @@ class Calibration:
 
     @staticmethod
     def laplace(errors: int, total: int) -> float:
+        """Return the Laplace-smoothed error rate for valid integer counts.
+
+        errors must be a subset of total. Booleans are rejected even though
+        Python treats them as integers.
+        """
+        if isinstance(errors, bool) or not isinstance(errors, int):
+            raise TypeError("errors must be an integer count")
+        if isinstance(total, bool) or not isinstance(total, int):
+            raise TypeError("total must be an integer count")
         if total < 0 or errors < 0:
             raise ValueError("errors and total must be non-negative")
+        if errors > total:
+            raise ValueError("errors cannot exceed total")
         if total == 0:
             return 1.0
         return (errors + 1) / (total + 2)
