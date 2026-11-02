@@ -75,6 +75,8 @@ class SessionCAnalysis:
     readiness: EvolutionReadiness
     topic: TopicProfile
     envelope: DynamicEnvelope
+    sequence_gaps: tuple[SequenceGap, ...] = ()
+    history_complete: bool = True
 
 
 class SessionCEngine:
@@ -198,6 +200,19 @@ class SessionCEngine:
         """Close this in-memory observer; durable recovery is not provided."""
         self._closed = True
 
+    def mark_gap_unrecoverable(self, start_sequence: int, end_sequence: int) -> None:
+        """Explicitly close an open gap as unrecoverable without rewriting history."""
+        if self._closed:
+            raise RuntimeError("Session C session is closed")
+        if start_sequence < 0 or end_sequence < start_sequence:
+            raise ValueError("invalid gap sequence range")
+        matches = [i for i, gap in enumerate(self._sequence_gaps) if gap.status == "open" and gap.start_sequence == start_sequence and gap.end_sequence == end_sequence]
+        if len(matches) != 1:
+            raise ValueError("an exact open gap range is required")
+        index = matches[0]
+        gap = self._sequence_gaps[index]
+        self._sequence_gaps[index] = SequenceGap(gap.start_sequence, gap.end_sequence, gap.previous_sequence, gap.next_sequence, gap.detected_at, "unrecoverable", datetime.now(timezone.utc))
+
     def analyze(self) -> SessionCAnalysis:
         if self._closed:
             raise RuntimeError("Session C session is closed")
@@ -215,7 +230,8 @@ class SessionCEngine:
             persistence_floor=self.persistence_floor, direction=self.direction,
         )
         topic = FieldDrivenTopicEngine().infer(items)
-        return SessionCAnalysis(readiness, topic, envelope)
+        gaps = tuple(self._sequence_gaps)
+        return SessionCAnalysis(readiness, topic, envelope, gaps, not any(gap.status in {"open", "unrecoverable"} for gap in gaps))
 
     def evolve(self) -> EvolutionDecision:
         analysis = self.analyze()
