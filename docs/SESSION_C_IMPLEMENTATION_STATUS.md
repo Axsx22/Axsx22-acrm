@@ -122,7 +122,7 @@ The envelope is an empirical quantile calculation over supplied values. It is no
 The tester is a callback interface. The core does not execute candidate source and does not provide a sandbox. A successful callback result proves only that the injected callback returned the required result, not that candidate code was safely or independently validated.
 
 ### Weighted review
-Reliability and relevance are multiplied to produce vote weights. Specialist identities must be unique within one review. Weighted review is not a substitute for evidence sufficiency, route selection, or execution authorization.
+Reliability and relevance are multiplied to produce vote weights. Specialist identities must be unique within one review. The built-in specialist reliability values are fixed configuration constants, not measured accuracy rates; default domain applicability uses keyword matching and default reports use hand-authored metric thresholds. These are deterministic heuristics whose semantic coverage and predictive validity have not been established. Weighted review is not a substitute for evidence sufficiency, route selection, or execution authorization. See [RUNTIME_MEASUREMENT_SEMANTICS.md](RUNTIME_MEASUREMENT_SEMANTICS.md).
 
 ### Runtime Injection and Version Switch
 These are distinct target routes with different compatibility, atomicity, verification, and rollback requirements. Neither route is implemented in the current Session C core.
