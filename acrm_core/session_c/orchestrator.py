@@ -343,6 +343,7 @@ class SessionCEngine:
         self._observation_ingest_sequence = staged_observation_sequences
         self._ingest_sequence = next_ingest_sequence
         self._ingest_received_at[next_ingest_sequence] = now
+        self._ingest_received_at[next_ingest_sequence] = now
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
@@ -411,6 +412,7 @@ class SessionCEngine:
         self._audit_ingest_sequence[audit.event_id] = next_ingest_sequence
         self._compensation_ingest_sequence[key] = next_ingest_sequence
         self._ingest_sequence = next_ingest_sequence
+        self._ingest_received_at[next_ingest_sequence] = now
         return True
 
     @_synchronized
@@ -450,6 +452,7 @@ class SessionCEngine:
         staged_gaps[self._sequence_gaps.index(gap)] = updated
         self._sequence_gaps, self._gap_audit_events = staged_gaps, tuple(staged_events)
         self._ingest_sequence = next_ingest_sequence
+        self._ingest_received_at[next_ingest_sequence] = now
 
     @_synchronized
     def record_late_recovery(self, evaluation: RuntimeEvaluation, *, source: str) -> LateRecoveryRecord:
@@ -479,6 +482,7 @@ class SessionCEngine:
         next_ingest_sequence = self._ingest_sequence + 1
         self._late_recovery_ingest_sequence[record.recovery_id] = next_ingest_sequence
         self._ingest_sequence = next_ingest_sequence
+        self._ingest_received_at[next_ingest_sequence] = now
         return record
 
     @_synchronized
