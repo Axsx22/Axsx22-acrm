@@ -214,7 +214,8 @@ It provides validated snapshots with properties including:
 - finite numeric metrics;
 - read-only metric storage;
 - unique failure-mode identifiers;
-- bounded `governance_confidence` in `[0.0, 1.0]`;
+- bounded legacy `governance_confidence` field in `[0.0, 1.0]`, with producer-specific semantics;
+- explicit `lexical_entropy_complement` metric for the current Runtime's lexical-entropy-derived proxy;
 - deterministic metric/failure-mode access;
 - UTC-normalized timestamps.
 
