@@ -478,6 +478,7 @@ def test_GAP_033_ingest_sequence_is_independent_of_wall_clock_order(monkeypatch)
     clock_values = iter((
         real_datetime(2030, 1, 1, 0, 0, 2, tzinfo=timezone.utc),
         real_datetime(2030, 1, 1, 0, 0, 1, tzinfo=timezone.utc),
+        real_datetime(2030, 1, 1, 0, 0, 0, 500000, tzinfo=timezone.utc),
     ))
 
     class BackwardsClock(real_datetime):
