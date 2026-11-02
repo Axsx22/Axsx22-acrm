@@ -435,8 +435,8 @@ class SessionCEngine:
         # retained as evidence, but do not establish when Session C knew them.
         items = tuple(
             item for item in self.observations
-            if self._observation_received_at.get(item.observation_id, evaluated_at)
-            <= evaluated_at
+            if item.observation_id in self._observation_received_at
+            and self._observation_received_at[item.observation_id] <= evaluated_at
         )
         known_values = [
             (value, received_at)
@@ -445,7 +445,7 @@ class SessionCEngine:
         ]
         if not known_values:
             raise ValueError("current_value is not available as of requested analysis time")
-        historical_current_value = max(known_values, key=lambda item: item[1])[0]
+        historical_current_value = known_values[-1][0]
         envelope = FieldEnvelopeEstimator().estimate(
             items, metric_name=self.metric_name,
             warning_quantile=self.warning_quantile,
