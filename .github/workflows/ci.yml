@@ -42,6 +42,9 @@ jobs:
           acrm_core/runtime/specialist_governance.py
           tests/unit/test_runtime_v7_v83.py
 
+      - name: Security static analysis
+        run: python -m bandit -q -r acrm_core -ll
+
       - name: Run tests with coverage
         run: python -m pytest --cov=acrm_core --cov-report=term-missing --cov-report=xml -ra
 
