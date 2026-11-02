@@ -14,8 +14,9 @@ coverage, and domain validity have not been established by this module.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, ClassVar
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,7 +98,7 @@ class SpecialistGovernance:
     BALANCE_EPS = 0.10
     MIN_BALANCE_EVIDENCE = 0.10
 
-    _DOMAIN_TERMS = {
+    _DOMAIN_TERMS: ClassVar[dict[str, tuple[str, ...]]] = {
         "fin": ("money", "payment", "cost", "price", "budget", "invoice", "financial", "profit", "loss", "debt"),
         "leg": ("law", "legal", "contract", "clause", "liability", "rights", "obligation", "compliance", "court"),
         "tec": ("system", "engine", "telemetry", "software", "hardware", "api", "code", "recovery", "failure", "sync", "algorithm", "network", "server", "database"),
