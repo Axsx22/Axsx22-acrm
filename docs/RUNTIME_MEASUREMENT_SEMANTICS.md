@@ -74,3 +74,9 @@ No result in this document asserts that these experiments have already been comp
 ## 9. Change-control rule
 
 A future change to metric semantics, thresholds, reliability weights, or the FieldState confidence field requires an explicit contract update, tests for changed computational behavior, migration/compatibility analysis where public fields change, documentation of the new evidence level, and empirical validation when the change is presented as improving behavioral measurement.
+
+## Input parser contract
+
+The text parser recognizes explicit `user:` and `model:` role prefixes. Once a role-prefixed message begins, subsequent unprefixed lines—including blank lines—are preserved as part of that message until the next recognized role prefix. Unprefixed non-empty lines before the first explicit role marker retain the legacy behavior and are treated as individual user turns.
+
+This is a lightweight text interchange format, not a complete parser for every provider's conversation schema. A literal line beginning with `user:` or `model:` inside a message is interpreted as a new turn. Provider-specific structured message formats should use explicit adapters rather than relying on this text parser.
