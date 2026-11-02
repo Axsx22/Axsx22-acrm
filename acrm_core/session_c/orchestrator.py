@@ -8,7 +8,8 @@ separate deployment concerns.
 from __future__ import annotations
 
 from dataclasses import dataclass, fields, is_dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from enum import Enum
 import hashlib
 import json
@@ -42,6 +43,14 @@ def _canonical_value(value):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("canonical timestamps must be timezone-aware")
         return value.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    if isinstance(value, date):
+        return {"$date": value.isoformat()}
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise ValueError("canonical payload cannot contain non-finite Decimals")
+        return {"$decimal": format(value.normalize(), "f")}
+    if isinstance(value, bytes):
+        return {"$bytes_hex": value.hex()}
     if isinstance(value, dict) or hasattr(value, "items"):
         return {str(key): _canonical_value(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
     if isinstance(value, (tuple, list)):
