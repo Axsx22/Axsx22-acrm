@@ -14,6 +14,8 @@ from enum import Enum
 import hashlib
 import json
 import math
+from functools import wraps
+from threading import RLock
 from typing import Iterable
 from types import MappingProxyType
 from uuid import uuid4
@@ -32,6 +34,14 @@ from acrm_core.session_c.topic import FieldDrivenTopicEngine, TopicProfile
 
 
 CANONICALIZATION_VERSION = 1
+
+
+def _synchronized(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapped
 
 
 def _canonical_value(value):
@@ -157,6 +167,7 @@ class SessionCAnalysis:
     history_complete: bool = True
     historical_completeness: HistoricalCompleteness | None = None
     currently_available_evidence: CurrentlyAvailableEvidence = CurrentlyAvailableEvidence(0, ())
+    snapshot_ingest_sequence: int = 0
 
 
 class SessionCEngine:
@@ -171,17 +182,21 @@ class SessionCEngine:
         tolerance: EvolutionTolerance | None = None,
         generator, tester, vote_provider,
     ) -> None:
+        self._lock = RLock()
+        self._ingest_sequence = 0
         self._observation_log = ObservationLog()
         initialized_at = datetime.now(timezone.utc)
         self._observation_received_at: dict[str, datetime] = {}
+        self._observation_ingest_sequence: dict[str, int] = {}
         for observation in observations:
             if self._observation_log.record(observation):
                 self._observation_received_at[observation.observation_id] = initialized_at
+                self._observation_ingest_sequence[observation.observation_id] = 0
         self.metric_name = metric_name
         self._current_value_history: list[tuple[float, datetime]] = []
         self._current_value = current_value
         if current_value is not None:
-            self._current_value_history.append((float(current_value), initialized_at))
+            self._current_value_history.append((float(current_value), initialized_at, 0))
         self.min_observations = min_observations
         self.persistence_floor = persistence_floor
         self.warning_quantile = warning_quantile
@@ -205,35 +220,44 @@ class SessionCEngine:
 
     @property
     def current_value(self) -> float | None:
-        return self._current_value
+        with self._lock:
+            return self._current_value
 
     @current_value.setter
     def current_value(self, value: float | None) -> None:
-        received_at = datetime.now(timezone.utc)
-        self._current_value = value
-        if value is not None:
-            self._current_value_history.append((float(value), received_at))
+        with self._lock:
+            received_at = datetime.now(timezone.utc)
+            next_sequence = self._ingest_sequence + 1
+            self._current_value = value
+            if value is not None:
+                self._current_value_history.append((float(value), received_at, next_sequence))
+            self._ingest_sequence = next_sequence
 
     @property
     def observations(self) -> tuple[EvolutionObservation, ...]:
-        return self._observation_log.snapshot()
+        with self._lock:
+            return self._observation_log.snapshot()
 
     @property
     def sequence_gaps(self) -> tuple[SequenceGap, ...]:
-        return tuple(self._sequence_gaps)
+        with self._lock:
+            return tuple(self._sequence_gaps)
 
     @property
     def gap_audit_events(self) -> tuple[GapAuditEvent, ...]:
-        return self._gap_audit_events
+        with self._lock:
+            return self._gap_audit_events
 
     @property
     def late_recovery_records(self) -> tuple[LateRecoveryRecord, ...]:
-        return self._late_recovery_records
+        with self._lock:
+            return self._late_recovery_records
 
     def _ensure_open(self) -> None:
         if self._closed:
             raise RuntimeError("Session C session is closed")
 
+    @_synchronized
     def record(self, observation: EvolutionObservation) -> None:
         self._ensure_open()
         if self._runtime_identity is not None:
@@ -242,7 +266,10 @@ class SessionCEngine:
         received_at = datetime.now(timezone.utc)
         added = self._observation_log.record(observation)
         if added:
+            next_sequence = self._ingest_sequence + 1
             self._observation_received_at[observation.observation_id] = received_at
+            self._observation_ingest_sequence[observation.observation_id] = next_sequence
+            self._ingest_sequence = next_sequence
 
     def _validate_evaluation(self, evaluation: RuntimeEvaluation):
         if not isinstance(evaluation, RuntimeEvaluation):
@@ -270,6 +297,7 @@ class SessionCEngine:
                 raise ValueError("Runtime observation identity does not match its batch")
         return identity, sequence, metric_value, runtime_evaluation_digest(evaluation)
 
+    @_synchronized
     def observe_runtime(self, evaluation: RuntimeEvaluation) -> int:
         """Accept only new monotonic sequences; gaps are recorded, late events rejected."""
         self._ensure_open()
@@ -296,19 +324,24 @@ class SessionCEngine:
             item.observation_id for item in self._observation_log.snapshot()
         }
         staged_observation_receipts = dict(self._observation_received_at)
+        staged_observation_sequences = dict(self._observation_ingest_sequence)
+        next_ingest_sequence = self._ingest_sequence + 1
         for item in evaluation.observations:
             if item.observation_id not in known_observation_ids:
                 staged_observation_receipts[item.observation_id] = now
+                staged_observation_sequences[item.observation_id] = next_ingest_sequence
         added = self._observation_log.record_many(evaluation.observations)
         self._observation_received_at = staged_observation_receipts
+        self._observation_ingest_sequence = staged_observation_sequences
+        self._ingest_sequence = next_ingest_sequence
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
-        self._accepted_sequences[sequence] = (fingerprint, now)
+        self._accepted_sequences[sequence] = (fingerprint, now, next_ingest_sequence)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
             self._current_value = metric_value
-            self._current_value_history.append((metric_value, now))
+            self._current_value_history.append((metric_value, now, next_ingest_sequence))
         return added
 
     def _find_gap(self, sequence: int) -> SequenceGap:
@@ -328,6 +361,7 @@ class SessionCEngine:
             gap.next_sequence, gap.detected_at, gap.gap_id, states,
         )
 
+    @_synchronized
     def compensate_gap(self, evaluation: RuntimeEvaluation, *, source: str) -> bool:
         """Explicitly compensate one OPEN member without rewriting event chronology."""
         self._ensure_open()
@@ -363,6 +397,7 @@ class SessionCEngine:
         )
         return True
 
+    @_synchronized
     def mark_gap_unrecoverable(
         self, start_sequence: int, end_sequence: int, *,
         reason: str, source: str, decision_id: str,
@@ -396,6 +431,7 @@ class SessionCEngine:
         staged_gaps[self._sequence_gaps.index(gap)] = updated
         self._sequence_gaps, self._gap_audit_events = staged_gaps, tuple(staged_events)
 
+    @_synchronized
     def record_late_recovery(self, evaluation: RuntimeEvaluation, *, source: str) -> LateRecoveryRecord:
         """Record post-UNRECOVERABLE evidence without changing historical status."""
         self._ensure_open()
@@ -422,7 +458,8 @@ class SessionCEngine:
         self._late_recovery_records, self._late_recovery_index = staged_records, staged_index
         return record
 
-    def analyze(self, *, as_of: datetime | None = None) -> SessionCAnalysis:
+    @_synchronized
+    def analyze(self, *, as_of: datetime | None = None, as_of_ingest_sequence: int | None = None) -> SessionCAnalysis:
         self._ensure_open()
         if self.current_value is None:
             raise ValueError("current_value is required before Session C analysis")
@@ -430,6 +467,14 @@ class SessionCEngine:
         if evaluated_at.tzinfo is None or evaluated_at.utcoffset() is None:
             raise ValueError("analysis as_of must be timezone-aware")
         evaluated_at = evaluated_at.astimezone(timezone.utc)
+        if as_of_ingest_sequence is None:
+            snapshot_sequence = self._ingest_sequence
+        else:
+            if isinstance(as_of_ingest_sequence, bool) or not isinstance(as_of_ingest_sequence, int) or as_of_ingest_sequence < 0:
+                raise ValueError("as_of_ingest_sequence must be a non-negative integer")
+            if as_of_ingest_sequence > self._ingest_sequence:
+                raise ValueError("as_of_ingest_sequence cannot exceed the current observer sequence")
+            snapshot_sequence = as_of_ingest_sequence
         # Every observation-derived output is computed from records received
         # by the observer no later than evaluated_at. Event timestamps are
         # retained as evidence, but do not establish when Session C knew them.
@@ -437,11 +482,12 @@ class SessionCEngine:
             item for item in self.observations
             if item.observation_id in self._observation_received_at
             and self._observation_received_at[item.observation_id] <= evaluated_at
+            and self._observation_ingest_sequence.get(item.observation_id, snapshot_sequence + 1) <= snapshot_sequence
         )
         known_values = [
-            (value, received_at)
-            for value, received_at in self._current_value_history
-            if received_at <= evaluated_at
+            (value, received_at, ingest_sequence)
+            for value, received_at, ingest_sequence in self._current_value_history
+            if received_at <= evaluated_at and ingest_sequence <= snapshot_sequence
         ]
         if not known_values:
             raise ValueError("current_value is not available as of requested analysis time")
@@ -462,8 +508,8 @@ class SessionCEngine:
         # production timestamp, so future arrivals cannot expand a past scope.
         scoped_sequences = sorted(
             number
-            for number, (_, received_at) in self._accepted_sequences.items()
-            if received_at <= evaluated_at
+            for number, (_, received_at, ingest_sequence) in self._accepted_sequences.items()
+            if received_at <= evaluated_at and ingest_sequence <= snapshot_sequence
         )
         scope_start = scoped_sequences[0] if scoped_sequences else None
         scope_end = scoped_sequences[-1] if scoped_sequences else None
@@ -486,8 +532,8 @@ class SessionCEngine:
         gaps = tuple(historical_gaps)
 
         available = {
-            number for number, (_, received_at) in self._accepted_sequences.items()
-            if received_at <= evaluated_at
+            number for number, (_, received_at, ingest_sequence) in self._accepted_sequences.items()
+            if received_at <= evaluated_at and ingest_sequence <= snapshot_sequence
         }
         available.update(
             sequence for (gap_id, sequence), (_, recorded_at, _) in self._compensation_records.items()
@@ -516,7 +562,7 @@ class SessionCEngine:
         )
         return SessionCAnalysis(
             readiness, topic, envelope, gaps, historical.complete,
-            historical, current_evidence,
+            historical, current_evidence, snapshot_sequence,
         )
 
     def close(self) -> None:
