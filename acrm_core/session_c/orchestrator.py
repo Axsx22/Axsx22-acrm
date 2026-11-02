@@ -178,8 +178,6 @@ class SessionCEngine:
             if self._observation_log.record(observation):
                 self._observation_received_at[observation.observation_id] = initialized_at
         self.metric_name = metric_name
-        initialized_at = datetime.now(timezone.utc)
-        self._observation_received_at: dict[str, datetime] = {}
         self._current_value_history: list[tuple[float, datetime]] = []
         self._current_value = current_value
         if current_value is not None:
