@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import Any, Sequence
+from typing import Sequence
 
 
 class FailureSeverity(str, Enum):
