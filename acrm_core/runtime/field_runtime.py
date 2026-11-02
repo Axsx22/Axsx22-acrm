@@ -86,7 +86,13 @@ class RuntimeEvaluation:
 
 
 class FieldRuntime:
-    """Pure behavioral evaluator with optional persistent v8.3 governance."""
+    """Lexical/statistical evaluator with optional stateful specialist governance.
+
+    The current FieldState.governance_confidence value is populated from
+    1 - normalized lexical entropy for legacy compatibility. It is only a
+    bounded lexical-entropy-complement proxy; it is not a probability,
+    calibrated confidence, semantic certainty, or the specialist vote result.
+    """
 
     def __init__(self, *, runtime_id: str | None = None, governance: SpecialistGovernance | None = None, anomaly_threshold: float = 0.35, centroid_alpha: float = 0.3) -> None:
         if not 0.0 < centroid_alpha <= 1.0:
@@ -152,7 +158,9 @@ class FieldRuntime:
 
         metrics = {"avgS": avg_s, "avgRho": avg_rho, "lastH": last_h, "RS": resilience, "anomalyIdx": anomaly}
         governance = self._governance_for_session(session_id).evaluate(tuple({"role": t.role, "text": t.text} for t in normalized), metrics)
-        confidence = max(0.0, min(1.0, 1.0 - last_h))
+        # Legacy FieldState field: this is a lexical-entropy complement only.
+        # It must not be interpreted as calibrated governance confidence.
+        lexical_entropy_complement = max(0.0, min(1.0, 1.0 - last_h))
         now = timestamp or datetime.now(timezone.utc)
         field = FieldState(
             field_id=field_id,
@@ -161,7 +169,7 @@ class FieldRuntime:
             timestamp=now,
             metrics={"S": avg_s, "rho": avg_rho, "delta": avg_delta, "H": last_h, "RS": resilience, "A": governance.accumulator},
             failure_modes=tuple(active),
-            governance_confidence=confidence,
+            governance_confidence=lexical_entropy_complement,
         )
         observations = (
             EvolutionObservation(f"{session_id}:{sequence}:stability", ObservationKind.PRESSURE if avg_s < 0.5 else ObservationKind.EVOLUTION_SIGNAL, "Sequential field stability was measured from adjacent turns.", now, {"S": avg_s, "rho": avg_rho}, "field_runtime"),
