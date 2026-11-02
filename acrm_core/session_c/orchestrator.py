@@ -193,7 +193,7 @@ class SessionCEngine:
                 self._observation_received_at[observation.observation_id] = initialized_at
                 self._observation_ingest_sequence[observation.observation_id] = 0
         self.metric_name = metric_name
-        self._current_value_history: list[tuple[float, datetime]] = []
+        self._current_value_history: list[tuple[float, datetime, int]] = []
         self._current_value = current_value
         if current_value is not None:
             self._current_value_history.append((float(current_value), initialized_at, 0))
@@ -209,9 +209,13 @@ class SessionCEngine:
         self._forwarded_ids: set[str] = set()
         self._runtime_identity = None
         self._runtime_batches = {}
-        self._accepted_sequences: dict[int, tuple[str, datetime]] = {}
+        self._accepted_sequences: dict[int, tuple[str, datetime, int]] = {}
         self._last_sequence = None
         self._sequence_gaps: list[SequenceGap] = []
+        self._gap_ingest_sequence: dict[str, int] = {}
+        self._audit_ingest_sequence: dict[str, int] = {}
+        self._compensation_ingest_sequence: dict[tuple[str, int], int] = {}
+        self._late_recovery_ingest_sequence: dict[str, int] = {}
         self._gap_audit_events: tuple[GapAuditEvent, ...] = ()
         self._compensation_records: dict[tuple[str, int], tuple[str, datetime, str]] = {}
         self._late_recovery_records: tuple[LateRecoveryRecord, ...] = ()
@@ -337,6 +341,8 @@ class SessionCEngine:
         self._runtime_identity = identity
         self._runtime_batches[batch_key] = fingerprint
         self._sequence_gaps = staged_gaps
+        for gap in staged_gaps[len(self._sequence_gaps):]:
+            self._gap_ingest_sequence[gap.gap_id] = next_ingest_sequence
         self._accepted_sequences[sequence] = (fingerprint, now, next_ingest_sequence)
         if self._last_sequence is None or sequence > self._last_sequence:
             self._last_sequence = sequence
